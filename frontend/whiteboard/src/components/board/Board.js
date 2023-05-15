@@ -30,7 +30,8 @@ function Board({ color, mode }) {
   const MAX_ZOOM = 5;
   const [zoom, setZoom] = useState(1);
 
-  const [peerDrawing, setPeerDrawing] = useState();
+  const [sendDrawings, setSendDrawings] = useState([]);
+  const [receiveDrawings, setReceiveDrawings] = useState([]);
 
   const draw = useCallback((start, end, strokeColor) => {
     if (!ctx || !canvas.current) {
@@ -98,7 +99,7 @@ function Board({ color, mode }) {
 
     if (drawing) {
       draw(prevMouse, mouse, color);
-      socket.emit('draw-data', [{ start: prevMouse, end: mouse, color: color }]);
+      setSendDrawings([...sendDrawings, { start: prevMouse, end: mouse, color: color }]);
     }
   }
 
@@ -127,6 +128,7 @@ function Board({ color, mode }) {
 
     if (mode === "draw") {
       setDrawing(false);
+      socket.emit('draw-data', sendDrawings, () => setSendDrawings([]));
     } else {
       setMoving(false);
     }
@@ -156,7 +158,6 @@ function Board({ color, mode }) {
     const offset = clampToCamera(cameraOffset.x, cameraOffset.y);
     ctx.translate(-width / 2 + offset.x, -height / 2 + offset.y);
     ctx.scale(zoom, zoom);
-    // update(zoom, clampToCamera(cameraOffset.x, cameraOffset.y));
     ctx.strokeStyle = "red";
     ctx.strokeRect(-maxCameraOffset.x + 10, -maxCameraOffset.y + 10, maxCameraOffset.x * 2 - 20, maxCameraOffset.y * 2 - 20);
 
@@ -171,12 +172,12 @@ function Board({ color, mode }) {
   }, [color, ctx])
 
   useEffect(() => {
-    if (!peerDrawing) {
+    if (!receiveDrawings) {
       return;
     }
 
-    draw(peerDrawing.start, peerDrawing.end, peerDrawing.color);
-  }, [peerDrawing, draw])
+    receiveDrawings.forEach(drawing => draw(drawing.start, drawing.end, drawing.color));
+  }, [receiveDrawings, draw])
 
   useEffect(() => {
     if (!canvas.current) {
@@ -200,9 +201,7 @@ function Board({ color, mode }) {
     setCameraOffset({ x: canvas.current.width / 2, y: canvas.current.height / 2 });
     setMaxCameraOffset({ x: canvas.current.width * 0.5, y: canvas.current.height * 0.5 });
 
-    socket.on('draw-data', (drawings) => {
-      drawings.forEach((drawing) => setPeerDrawing(drawing))
-    });
+    socket.on('draw-data', (drawings) => setReceiveDrawings(drawings));
   }, [])
 
   return (
