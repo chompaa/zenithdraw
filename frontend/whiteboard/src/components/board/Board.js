@@ -8,31 +8,21 @@ import { MouseEvent } from 'react';
 
 import './style.css'
 
-export enum Mode {
-  Draw,
-  Move,
-}
+function Board({ color, mode }) {
+  let canvas = useRef(null);
 
-interface Position {
-  x: number,
-  y: number
-}
-
-function Board({ color, mode }: { color: string, mode: Mode }) {
-  let canvas = useRef<HTMLCanvasElement>(null);
-
-  const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
-  const [mouse, setMouse] = useState<Position>({ x: 0, y: 0 });
-  const [prevMouse, setPrevMouse] = useState<Position>({ x: 0, y: 0 });
+  const [ctx, setCtx] = useState(null);
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const [prevMouse, setPrevMouse] = useState({ x: 0, y: 0 });
 
   // drawing
   const [drawing, setDrawing] = useState(false);
 
   // moving
   const [moving, setMoving] = useState(false);
-  const [moveStart, setMoveStart] = useState<Position>({ x: 0, y: 0 });
-  const [cameraOffset, setCameraOffset] = useState<Position>({ x: 0, y: 0 });
-  const [maxCameraOffset, setMaxCameraOffset] = useState<Position>({ x: 0, y: 0 });
+  const [moveStart, setMoveStart] = useState({ x: 0, y: 0 });
+  const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
+  const [maxCameraOffset, setMaxCameraOffset] = useState({ x: 0, y: 0 });
 
   // zooming
   const SCROLL_SENSITIVITY = 0.001
@@ -40,9 +30,9 @@ function Board({ color, mode }: { color: string, mode: Mode }) {
   const MAX_ZOOM = 5;
   const [zoom, setZoom] = useState(1);
 
-  const [peerDrawing, setPeerDrawing] = useState<{ start: Position, end: Position, color: string }>();
+  const [peerDrawing, setPeerDrawing] = useState();
 
-  const draw = useCallback((start: Position, end: Position, strokeColor: string) => {
+  const draw = useCallback((start, end, strokeColor) => {
     if (!ctx || !canvas.current) {
       return;
     }
@@ -58,7 +48,7 @@ function Board({ color, mode }: { color: string, mode: Mode }) {
     requestAnimationFrame(() => draw(start, end, strokeColor));
   }, [ctx]);
 
-  const getEventLocation = (e: any) => {
+  const getEventLocation = (e) => {
     if (e.touches && e.touches.length == 1) {
       return { x: e.touches[0].clientX, y: e.touches[0].clientY }
     } else if (e.clientX && e.clientY) {
@@ -66,11 +56,11 @@ function Board({ color, mode }: { color: string, mode: Mode }) {
     }
   }
 
-  const clamp = (n: number, min: number, max: number) => {
+  const clamp = (n, min, max) => {
     return Math.max(min, Math.min(n, max));
   }
 
-  const clampToCamera = useCallback((x: number, y: number) => {
+  const clampToCamera = useCallback((x, y) => {
     if (!canvas.current) {
       return { x: 0, y: 0 }
     }
@@ -83,7 +73,7 @@ function Board({ color, mode }: { color: string, mode: Mode }) {
     }
   }, [maxCameraOffset, zoom]);
 
-  const mouseMove = (e: MouseEvent) => {
+  const mouseMove = (e) => {
     if (!canvas.current || !ctx) {
       return;
     }
@@ -112,14 +102,14 @@ function Board({ color, mode }: { color: string, mode: Mode }) {
     }
   }
 
-  const mouseDown = (e: MouseEvent) => {
+  const mouseDown = (e) => {
     if (!canvas.current) {
       return;
     }
 
     console.log("down");
 
-    if (mode === Mode.Draw) {
+    if (mode === "draw") {
       setDrawing(true);
     } else {
       setMoving(true);
@@ -135,14 +125,14 @@ function Board({ color, mode }: { color: string, mode: Mode }) {
       return;
     }
 
-    if (mode === Mode.Draw) {
+    if (mode === "draw") {
       setDrawing(false);
     } else {
       setMoving(false);
     }
   }
 
-  const wheel = (amount: number) => {
+  const wheel = (amount) => {
     let newZoom = zoom + amount;
 
     if (newZoom < MIN_ZOOM || newZoom > MAX_ZOOM) {
@@ -151,21 +141,6 @@ function Board({ color, mode }: { color: string, mode: Mode }) {
 
     setZoom(newZoom);
   }
-
-  // const update = (scale: number, offset: Position) => {
-  //   if (!canvas.current || !ctx) {
-  //     return;
-  //   }
-
-  //   const width = canvas.current.width;
-  //   const height = canvas.current.height;
-
-  //   ctx.resetTransform();
-  //   ctx.clearRect(0, 0, width, height);
-  //   ctx.translate(width / 2, height / 2);
-  //   ctx.translate(-width / 2 + offset.x, -height / 2 + offset.y);
-  //   ctx.scale(scale, scale);
-  // }
 
   useEffect(() => {
     if (!canvas.current || !ctx) {
@@ -213,7 +188,7 @@ function Board({ color, mode }: { color: string, mode: Mode }) {
     canvas.current.width = parseInt(style.getPropertyValue('width'));
     canvas.current.height = parseInt(style.getPropertyValue('height'));
 
-    let canvasCtx = canvas.current.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
+    let canvasCtx = canvas.current.getContext('2d', { willReadFrequently: true });
 
     canvasCtx.lineCap = 'round';
     canvasCtx.lineJoin = 'round'
@@ -225,8 +200,8 @@ function Board({ color, mode }: { color: string, mode: Mode }) {
     setCameraOffset({ x: canvas.current.width / 2, y: canvas.current.height / 2 });
     setMaxCameraOffset({ x: canvas.current.width * 0.5, y: canvas.current.height * 0.5 });
 
-    socket.on('draw-data', (drawings: any) => {
-      drawings.forEach((drawing: { start: Position, end: Position, color: string }) => setPeerDrawing(drawing))
+    socket.on('draw-data', (drawings) => {
+      drawings.forEach((drawing) => setPeerDrawing(drawing))
     });
   }, [])
 

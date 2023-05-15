@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import Board, { Mode } from '../board/Board';
+import Board from '../board/Board';
 
 import './style.css';
 
 function Container() {
-  const [mode, setMode] = useState<Mode>(Mode.Draw);
+  const [mode, setMode] = useState("draw");
   const [color, setColor] = useState("#000000");
 
-  const changeColor = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const changeColor = (e) => {
     setColor(e.target.value);
   }
 
@@ -20,8 +20,7 @@ function Container() {
         <Board color={color} mode={mode}></Board>
       </div>
       <button onClick={() => {
-        mode === Mode.Draw ? setMode(Mode.Move) : setMode(Mode.Draw)
-        console.log(mode);
+        mode === "draw" ? setMode("move") : setMode("draw")
       }}>Hi</button>
     </div>
   );
