@@ -143,15 +143,15 @@ function Board({ color, mode }) {
   }
 
   const pinch = (e) => {
-    let touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-    let touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY }
+    const touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    const touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY }
 
-    let currentDistance = (touch1.x - touch2.x) ** 2 + (touch1.y - touch2.y) ** 2
+    const newZoom = Math.sqrt(Math.pow(touch1.x - touch2.x, 2) + Math.pow(touch1.y - touch2.y, 2))
 
     if (initialPinchDistance == null) {
-      setInitialPinchDistance(currentDistance);
+      setInitialPinchDistance(newZoom);
     } else {
-      setZoom(clamp(zoom * (currentDistance / initialPinchDistance), MIN_ZOOM, MAX_ZOOM));
+      setZoom(clamp(zoom - newZoom, MIN_ZOOM, MAX_ZOOM));
     }
   }
 
