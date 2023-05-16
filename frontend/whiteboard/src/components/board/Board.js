@@ -4,7 +4,8 @@ import { useCallback } from 'react';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { useRef } from 'react';
-import { MouseEvent } from 'react';
+
+import Mode from '../container/Mode';
 
 import './style.css'
 
@@ -14,6 +15,9 @@ function Board({ color, mode }) {
   const [ctx, setCtx] = useState(null);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [prevMouse, setPrevMouse] = useState({ x: 0, y: 0 });
+
+  const BORDER_SIZE = 20;
+  const LINE_SIZE = 2;
 
   // drawing
   const [drawing, setDrawing] = useState(false);
@@ -108,9 +112,7 @@ function Board({ color, mode }) {
       return;
     }
 
-    console.log("down");
-
-    if (mode === "draw") {
+    if (mode === Mode.Draw) {
       setDrawing(true);
     } else {
       setMoving(true);
@@ -121,14 +123,19 @@ function Board({ color, mode }) {
     }
   }
 
+  useEffect(() => {
+    console.log(sendDrawings.length)
+  }, [sendDrawings])
+
   const mouseUp = () => {
     if (!canvas.current) {
       return;
     }
 
-    if (mode === "draw") {
+    if (mode === Mode.Draw) {
       setDrawing(false);
-      socket.emit('draw-data', sendDrawings, () => setSendDrawings([]));
+      socket.emit('draw-data', sendDrawings);
+      setSendDrawings([]);
     } else {
       setMoving(false);
     }
@@ -154,12 +161,17 @@ function Board({ color, mode }) {
 
     ctx.resetTransform();
     ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = "#fcfcfc";
+    ctx.fillRect(0, 0, canvas.current.width, canvas.current.height);
     ctx.translate(width / 2, height / 2);
     const offset = clampToCamera(cameraOffset.x, cameraOffset.y);
     ctx.translate(-width / 2 + offset.x, -height / 2 + offset.y);
     ctx.scale(zoom, zoom);
-    ctx.strokeStyle = "red";
-    ctx.strokeRect(-maxCameraOffset.x + 10, -maxCameraOffset.y + 10, maxCameraOffset.x * 2 - 20, maxCameraOffset.y * 2 - 20);
+    ctx.lineWidth = BORDER_SIZE;
+    // ctx.strokeStyle = "#393541";
+    ctx.strokeStyle = "#191a1f";
+    ctx.strokeRect(-maxCameraOffset.x, -maxCameraOffset.y, maxCameraOffset.x * 2, maxCameraOffset.y * 2);
+    ctx.lineWidth = LINE_SIZE;
 
   }, [cameraOffset, zoom, clampToCamera, ctx, maxCameraOffset]);
 
@@ -193,7 +205,7 @@ function Board({ color, mode }) {
 
     canvasCtx.lineCap = 'round';
     canvasCtx.lineJoin = 'round'
-    canvasCtx.lineWidth = 5;
+    canvasCtx.lineWidth = LINE_SIZE;
     canvasCtx.translate(canvas.current.width / 2, canvas.current.height / 2)
 
     setCtx(canvasCtx);
@@ -219,8 +231,8 @@ function Board({ color, mode }) {
         }}
       >
       </canvas>
-      <button onClick={() => wheel(SCROLL_SENSITIVITY * 50)}>Zoom in</button>
-      <button onClick={() => wheel(-SCROLL_SENSITIVITY * 50)}>Zoom out</button>
+      {/* <button onClick={() => wheel(SCROLL_SENSITIVITY * 50)}>Zoom in</button>
+      <button onClick={() => wheel(-SCROLL_SENSITIVITY * 50)}>Zoom out</button> */}
     </>
   );
 }
