@@ -1,4 +1,5 @@
 .board {
+  touch-action: none;
   width: 971px;
   height: 729px;
 }

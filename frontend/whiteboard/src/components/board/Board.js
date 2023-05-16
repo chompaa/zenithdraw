@@ -90,7 +90,6 @@ function Board({ color, mode }) {
         location.x - moveStart.x,
         location.y - moveStart.y,
       );
-      console.log(clampedOffset);
 
       setCameraOffset({ x: clampedOffset.x, y: clampedOffset.y });
     }
@@ -100,8 +99,6 @@ function Board({ color, mode }) {
       x: (location.x - rect.left - cameraOffset.x) / zoom,
       y: (location.y - rect.top - cameraOffset.y) / zoom,
     });
-
-    console.log(prevMouse, mouse);
 
     if (drawing) {
       draw(prevMouse, mouse, color);
@@ -130,8 +127,6 @@ function Board({ color, mode }) {
     if (!canvas.current) {
       return;
     }
-
-    console.log("mouse up!")
 
     if (mode === Mode.Draw) {
       setDrawing(false);
@@ -171,8 +166,6 @@ function Board({ color, mode }) {
     if (e.touches.length < 2) {
       singleTouchHandler(e);
     } else if (e.type === "touchmove" && e.touches.length === 2 && mode === Mode.Move) {
-      e.preventDefault();
-
       let touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY }
       let touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY }
 
@@ -264,19 +257,18 @@ function Board({ color, mode }) {
         onWheel={(e) => {
           wheel(-e.deltaY * SCROLL_SENSITIVITY)
         }}
-        onTouchMove={(e) => touch(e, mouseMove)}
+        onTouchMove={(e) => {
+          touch(e, mouseMove);
+        }}
         onTouchStart={(e) => {
           resetMouse(e);
           touch(e, mouseDown);
         }}
         onTouchEnd={(e) => {
-          console.log(e.touches.length);
           touch(e, mouseUp);
         }}
       >
       </canvas>
-      {/* <button onClick={() => wheel(SCROLL_SENSITIVITY * 50)}>Zoom in</button>
-      <button onClick={() => wheel(-SCROLL_SENSITIVITY * 50)}>Zoom out</button> */}
     </>
   );
 }
