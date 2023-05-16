@@ -137,14 +137,37 @@ function Board({ color, mode }) {
     }
   }
 
+  const isZoomInBounds = (z) => {
+    return z >= MIN_ZOOM && z <= MAX_ZOOM;
+  }
+
   const wheel = (amount) => {
     let newZoom = zoom + amount;
 
-    if (newZoom < MIN_ZOOM || newZoom > MAX_ZOOM) {
+    if (!isZoomInBounds(newZoom)) {
       return;
     }
 
     setZoom(newZoom);
+  }
+
+  const pinch = (e) => {
+    let touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    let touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY }
+
+    let currentDistance = (touch1.x - touch2.x) ** 2 + (touch1.y - touch2.y) ** 2
+
+    if (initialPinchDistance == null) {
+      setInitialPinchDistance(currentDistance);
+    } else {
+      const newZoom = zoom * (currentDistance / initialPinchDistance)
+
+      if (!isZoomInBounds(newZoom)) {
+        return;
+      }
+
+      setZoom(newZoom);
+    }
   }
 
   const resetMouse = (e) => {
@@ -166,17 +189,7 @@ function Board({ color, mode }) {
     if (e.touches.length < 2) {
       singleTouchHandler(e);
     } else if (e.type === "touchmove" && e.touches.length === 2 && mode === Mode.Move) {
-      let touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      let touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY }
-
-      let currentDistance = (touch1.x - touch2.x) ** 2 + (touch1.y - touch2.y) ** 2
-
-      if (initialPinchDistance == null) {
-        setInitialPinchDistance(currentDistance);
-      }
-      else {
-        setZoom(zoom * (currentDistance / initialPinchDistance));
-      }
+      pinch(e);
     }
   }
 
