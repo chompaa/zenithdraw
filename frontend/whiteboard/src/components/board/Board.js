@@ -30,6 +30,7 @@ function Board({ color, mode }) {
 
   // zooming
   const SCROLL_SENSITIVITY = 0.001
+  const PINCH_SENSITIVITY = 0.2
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 5;
   const [zoom, setZoom] = useState(1);
@@ -146,12 +147,12 @@ function Board({ color, mode }) {
     const touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY }
     const touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY }
 
-    const newZoom = Math.sqrt(Math.pow(touch1.x - touch2.x, 2) + Math.pow(touch1.y - touch2.y, 2))
+    const currentDistance = Math.pow(touch1.x - touch2.x, 2) + Math.pow(touch1.y - touch2.y, 2);
 
     if (initialPinchDistance == null) {
-      setInitialPinchDistance(newZoom);
+      setInitialPinchDistance(currentDistance);
     } else {
-      setZoom(clamp(zoom - newZoom, MIN_ZOOM, MAX_ZOOM));
+      setZoom(clamp(zoom * PINCH_SENSITIVITY * (currentDistance / initialPinchDistance), MIN_ZOOM, MAX_ZOOM));
     }
   }
 
