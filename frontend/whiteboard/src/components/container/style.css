@@ -10,6 +10,7 @@
   background: #393541;
   /* background: #191a1f; */
   padding: 1em 1em 1em 1em;
+  user-select: none;
 }
 
 .color-picker {
@@ -17,10 +18,12 @@
   background: none;
   width: 4em;
   height: 4em;
+  user-select: none;
 }
 
 .color-picker::-webkit-color-swatch {
   border: solid 4px #191a1f;
+  user-select: none;
 }
 
 .tools-container {
@@ -29,6 +32,7 @@
   row-gap: 1em;
   align-items: center;
   justify-content: center;
+  user-select: none;
 }
 
 .board-container {
@@ -40,12 +44,14 @@
   margin: 2em 2em 2em 2em;
   background: #393541;
   /* background: #191a1f; */
+  user-select: none;
 }
 
 .tool {
   image-rendering: pixelated;
   width: 50px;
   aspect-ratio: 1;
+  user-select: none;
 }
 
 .tool:hover {
