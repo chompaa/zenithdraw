@@ -33,6 +33,7 @@ function Board({ color, mode }) {
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 5;
   const [zoom, setZoom] = useState(1);
+  const [initialPinchDistance, setInitialPinchDistance] = useState(null);
 
   const [sendDrawings, setSendDrawings] = useState([]);
   const [receiveDrawings, setReceiveDrawings] = useState([]);
@@ -54,7 +55,7 @@ function Board({ color, mode }) {
   }, [ctx]);
 
   const getEventLocation = (e) => {
-    if (e.touches && e.touches.length == 1) {
+    if (e.touches && e.touches.length === 1) {
       return { x: e.touches[0].clientX, y: e.touches[0].clientY }
     } else if (e.clientX && e.clientY) {
       return { x: e.clientX, y: e.clientY }
@@ -70,8 +71,6 @@ function Board({ color, mode }) {
       return { x: 0, y: 0 }
     }
 
-    console.log(zoom);
-
     return {
       x: clamp(x, (canvas.current.width - (maxCameraOffset.x * zoom)), maxCameraOffset.x * zoom),
       y: clamp(y, (canvas.current.height - (maxCameraOffset.y * zoom)), maxCameraOffset.y * zoom)
@@ -83,12 +82,13 @@ function Board({ color, mode }) {
       return;
     }
 
+    let location = getEventLocation(e);
     let rect = canvas.current.getBoundingClientRect();
 
     if (moving) {
       let clampedOffset = clampToCamera(
-        (e.clientX - moveStart.x),
-        (e.clientY - moveStart.y),
+        location.x - moveStart.x,
+        location.y - moveStart.y,
       );
       console.log(clampedOffset);
 
@@ -97,9 +97,11 @@ function Board({ color, mode }) {
 
     setPrevMouse(mouse);
     setMouse({
-      x: (e.clientX - rect.left - cameraOffset.x) / zoom,
-      y: (e.clientY - rect.top - cameraOffset.y) / zoom,
+      x: (location.x - rect.left - cameraOffset.x) / zoom,
+      y: (location.y - rect.top - cameraOffset.y) / zoom,
     });
+
+    console.log(prevMouse, mouse);
 
     if (drawing) {
       draw(prevMouse, mouse, color);
@@ -116,21 +118,20 @@ function Board({ color, mode }) {
       setDrawing(true);
     } else {
       setMoving(true);
+      let location = getEventLocation(e);
       setMoveStart({
-        x: e.clientX - cameraOffset.x,
-        y: e.clientY - cameraOffset.y,
+        x: location.x - cameraOffset.x,
+        y: location.y - cameraOffset.y,
       });
     }
   }
 
-  useEffect(() => {
-    console.log(sendDrawings.length)
-  }, [sendDrawings])
-
-  const mouseUp = () => {
+  const mouseUp = (e) => {
     if (!canvas.current) {
       return;
     }
+
+    console.log("mouse up!")
 
     if (mode === Mode.Draw) {
       setDrawing(false);
@@ -149,6 +150,41 @@ function Board({ color, mode }) {
     }
 
     setZoom(newZoom);
+  }
+
+  const resetMouse = (e) => {
+    let location = getEventLocation(e);
+    let rect = canvas.current.getBoundingClientRect();
+
+    setPrevMouse({
+      x: (location.x - rect.left - cameraOffset.x) / zoom,
+      y: (location.y - rect.top - cameraOffset.y) / zoom,
+    });
+
+    setMouse({
+      x: (location.x - rect.left - cameraOffset.x) / zoom,
+      y: (location.y - rect.top - cameraOffset.y) / zoom,
+    });
+  }
+
+  const touch = (e, singleTouchHandler) => {
+    if (e.touches.length < 2) {
+      singleTouchHandler(e);
+    } else if (e.type === "touchmove" && e.touches.length === 2 && mode === Mode.Move) {
+      e.preventDefault();
+
+      let touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      let touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY }
+
+      let currentDistance = (touch1.x - touch2.x) ** 2 + (touch1.y - touch2.y) ** 2
+
+      if (initialPinchDistance == null) {
+        setInitialPinchDistance(currentDistance);
+      }
+      else {
+        setZoom(zoom * (currentDistance / initialPinchDistance));
+      }
+    }
   }
 
   useEffect(() => {
@@ -227,7 +263,15 @@ function Board({ color, mode }) {
         onMouseUp={mouseUp}
         onWheel={(e) => {
           wheel(-e.deltaY * SCROLL_SENSITIVITY)
-          e.preventDefault();
+        }}
+        onTouchMove={(e) => touch(e, mouseMove)}
+        onTouchStart={(e) => {
+          resetMouse(e);
+          touch(e, mouseDown);
+        }}
+        onTouchEnd={(e) => {
+          console.log(e.touches.length);
+          touch(e, mouseUp);
         }}
       >
       </canvas>
