@@ -134,6 +134,7 @@ function Board({ color, mode }) {
       setSendDrawings([]);
     } else {
       setMoving(false);
+      setInitialPinchDistance(null);
     }
   }
 
