@@ -151,7 +151,7 @@ function Board({ color, mode }) {
     if (initialPinchDistance == null) {
       setInitialPinchDistance(currentDistance);
     } else {
-      setZoom(clamp(zoom * 0.9 * (currentDistance / initialPinchDistance), MIN_ZOOM, MAX_ZOOM));
+      setZoom(clamp(zoom * 0.5 * (currentDistance / initialPinchDistance), MIN_ZOOM, MAX_ZOOM));
     }
   }
 
