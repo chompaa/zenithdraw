@@ -138,18 +138,8 @@ function Board({ color, mode }) {
     }
   }
 
-  const isZoomInBounds = (z) => {
-    return z >= MIN_ZOOM && z <= MAX_ZOOM;
-  }
-
   const wheel = (amount) => {
-    let newZoom = zoom + amount;
-
-    if (!isZoomInBounds(newZoom)) {
-      return;
-    }
-
-    setZoom(newZoom);
+    setZoom(clamp(zoom + amount, MIN_ZOOM, MAX_ZOOM));
   }
 
   const pinch = (e) => {
@@ -161,13 +151,7 @@ function Board({ color, mode }) {
     if (initialPinchDistance == null) {
       setInitialPinchDistance(currentDistance);
     } else {
-      const newZoom = zoom * (currentDistance / initialPinchDistance)
-
-      if (!isZoomInBounds(newZoom)) {
-        return;
-      }
-
-      setZoom(newZoom);
+      setZoom(clamp(zoom * (currentDistance / initialPinchDistance), MIN_ZOOM, MAX_ZOOM));
     }
   }
 

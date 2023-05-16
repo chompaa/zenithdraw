@@ -3,4 +3,5 @@
   width: 971px;
   height: 729px;
   user-select: none;
+  -webkit-user-select: none;
 }
