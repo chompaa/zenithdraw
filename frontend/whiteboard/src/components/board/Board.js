@@ -91,7 +91,7 @@ function Board({ size, color, backgroundColor, mode }) {
     return Math.max(min, Math.min(n, max));
   };
 
-  const clampToCamera = useCallback(
+  const getClampedCamera = useCallback(
     (canvas, x, y) => {
       if (!canvas) {
         return { x: 0, y: 0 };
@@ -121,13 +121,13 @@ function Board({ size, color, backgroundColor, mode }) {
     let rect = viewCanvas.current.getBoundingClientRect();
 
     if (isMoving.current) {
-      let clampedOffset = clampToCamera(
-        viewCanvas.current,
-        location.x - moveStart.current.x,
-        location.y - moveStart.current.y
+      setCameraOffset(
+        getClampedCamera(
+          viewCanvas.current,
+          location.x - moveStart.current.x,
+          location.y - moveStart.current.y
+        )
       );
-
-      setCameraOffset({ x: clampedOffset.x, y: clampedOffset.y });
     }
 
     setPrevMouse(mouse);
@@ -266,7 +266,21 @@ function Board({ size, color, backgroundColor, mode }) {
       y: -canvas.height / 2,
     };
 
-    const offset = clampToCamera(canvas, cameraOffset.x, cameraOffset.y);
+    const offset = getClampedCamera(canvas, cameraOffset.x, cameraOffset.y);
+
+    if (
+      Math.abs(cameraOffset.x - offset.x) > 0 ||
+      Math.abs(cameraOffset.y - offset.y) > 0
+    ) {
+      // if the camera went out of bounds, correct it and re-render
+      setCameraOffset({
+        x: offset.x,
+        y: offset.y,
+      });
+
+      return;
+    }
+
     context.translate(origin.x + offset.x, origin.y + offset.y);
 
     context.scale(zoom, zoom);
@@ -289,7 +303,7 @@ function Board({ size, color, backgroundColor, mode }) {
     }
 
     context.drawImage(canvasImage, origin.x, origin.y);
-  }, [cameraOffset, zoom, clampToCamera, backgroundColor, canvasImage]);
+  }, [cameraOffset, zoom, getClampedCamera, backgroundColor, canvasImage]);
 
   const initializeCanvas = (canvasRef, contextRef) => {
     let style = getComputedStyle(canvasRef.current);
@@ -301,6 +315,7 @@ function Board({ size, color, backgroundColor, mode }) {
       willReadFrequently: true,
     });
 
+    contextRef.imageSmoothingEnabled = false;
     contextRef.current.lineCap = "round";
     contextRef.current.lineJoin = "round";
     contextRef.current.lineWidth = LINE_SIZE;
