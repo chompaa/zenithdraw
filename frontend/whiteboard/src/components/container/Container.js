@@ -1,17 +1,17 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-import Board from '../board/Board';
-import Tool from './Tool'
-import Mode from './Mode'
+import Board from "../board/Board";
+import Tool from "./Tool";
+import Mode from "./Mode";
 
-import moveInActive from './moveInactive.png';
-import moveActive from './moveActive.png';
-import drawActive from './drawActive.png';
-import drawInActive from './drawInactive.png'
-import eraseActive from './eraseActive.png';
-import eraseInActive from './eraseInActive.png'
+import moveInActive from "./moveInactive.png";
+import moveActive from "./moveActive.png";
+import drawActive from "./drawActive.png";
+import drawInActive from "./drawInactive.png";
+import eraseActive from "./eraseActive.png";
+import eraseInActive from "./eraseInActive.png";
 
-import './style.css';
+import "./style.css";
 
 function Container() {
   const [mode, setMode] = useState(Mode.Draw);
@@ -19,11 +19,11 @@ function Container() {
 
   const changeColor = (e) => {
     setColor(e.target.value);
-  }
+  };
 
   return (
-    <div className="container" >
-      <div className="tools-container" >
+    <div className="container">
+      <div className="tools-container">
         <Tool
           activeImage={moveActive}
           inActiveImage={moveInActive}
@@ -45,10 +45,15 @@ function Container() {
         <input className="color-picker" type="color" onChange={changeColor} />
       </div>
       <div className="board-container">
-        <Board size={{ width: 975, height: 650 }} color={color} backgroundColor={"#fcfcfc"} mode={mode}></Board>
+        <Board
+          size={{ width: 975, height: 650 }}
+          color={color}
+          backgroundColor={"#fcfcfc"}
+          mode={mode}
+        ></Board>
       </div>
     </div>
   );
 }
 
-export default Container
+export default Container;
