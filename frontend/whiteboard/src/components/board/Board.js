@@ -400,12 +400,12 @@ function Board({ size, color, backgroundColor, mode }) {
         animationFrameStart.current = request;
 
         // make sure we cache the image in the draw port, too!
-        clearCanvas(drawCanvas.current, drawContext.current);
-        drawContext.current.drawImage(
-          updatedCanvasImage,
-          -canvasSize.width / 2,
-          -canvasSize.height / 2
-        );
+        // clearCanvas(drawCanvas.current, drawContext.current);
+        // drawContext.current.drawImage(
+        //   updatedCanvasImage,
+        //   -canvasSize.width / 2,
+        //   -canvasSize.height / 2
+        // );
 
         setCanvasImage(updatedCanvasImage);
       });
