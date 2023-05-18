@@ -46,7 +46,7 @@ function Container() {
       </div>
       <div className="board-container">
         <Board
-          size={{ width: 975, height: 650 }}
+          size={{ width: 975, height: 575 }}
           color={color}
           backgroundColor={"#fcfcfc"}
           mode={mode}
