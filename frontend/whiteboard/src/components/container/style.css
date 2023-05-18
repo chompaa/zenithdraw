@@ -36,7 +36,8 @@
 }
 
 .board-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr;
   align-items: center;
   justify-content: center;
   width: auto;
@@ -45,6 +46,12 @@
   background: #393541;
   /* background: #191a1f; */
   user-select: none;
+}
+
+.board-container div,
+.board-container canvas {
+  grid-row-start: 1;
+  grid-column-start: 1;
 }
 
 .tool {

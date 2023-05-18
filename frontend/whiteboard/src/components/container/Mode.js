@@ -1,6 +1,7 @@
 const Mode = {
   Draw: "draw",
-  Move: "move"
+  Move: "move",
+  Erase: "erase",
 }
 
 export default Mode;

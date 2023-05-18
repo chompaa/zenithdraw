@@ -8,6 +8,8 @@ import moveInActive from './moveInactive.png';
 import moveActive from './moveActive.png';
 import drawActive from './drawActive.png';
 import drawInActive from './drawInactive.png'
+import eraseActive from './eraseActive.png';
+import eraseInActive from './eraseInActive.png'
 
 import './style.css';
 
@@ -34,10 +36,16 @@ function Container() {
           isActive={mode === Mode.Draw}
           onClick={() => setMode(Mode.Draw)}
         ></Tool>
+        <Tool
+          activeImage={eraseActive}
+          inActiveImage={eraseInActive}
+          isActive={mode === Mode.Erase}
+          onClick={() => setMode(Mode.Erase)}
+        ></Tool>
         <input className="color-picker" type="color" onChange={changeColor} />
       </div>
       <div className="board-container">
-        <Board color={color} mode={mode}></Board>
+        <Board size={{ width: 975, height: 650 }} color={color} backgroundColor={"#fcfcfc"} mode={mode}></Board>
       </div>
     </div>
   );

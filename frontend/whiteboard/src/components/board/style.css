@@ -1,4 +1,3 @@
 .board {
-  width: 975px;
-  height: 650px;
+  image-rendering: pixelated;
 }
