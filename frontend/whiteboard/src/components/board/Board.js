@@ -27,7 +27,7 @@ function Board({ size, color, backgroundColor, mode }) {
   // zooming
   const SCROLL_SENSITIVITY = 0.001;
   const MIN_ZOOM = 1;
-  const MAX_ZOOM = 5;
+  const MAX_ZOOM = 10;
   const [zoom, setZoom] = useState(1);
   const pinchDistanceStart = useRef(null);
 
@@ -322,7 +322,7 @@ function Board({ size, color, backgroundColor, mode }) {
         } else {
           setZoom((zoom) =>
             clamp(
-              zoom * 0.5 * (currentDistance / pinchDistanceStart),
+              zoom * (currentDistance / pinchDistanceStart),
               MIN_ZOOM,
               MAX_ZOOM
             )
