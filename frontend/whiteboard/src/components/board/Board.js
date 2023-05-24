@@ -2,6 +2,8 @@ import { socket } from "../../socket";
 
 import { useState, useRef, useEffect, useCallback } from "react";
 
+import { addAlpha, clamp, distance } from "../../utils";
+
 import Mode from "../container/Mode";
 
 import "./style.css";
@@ -10,26 +12,17 @@ function Board({ size, color, backgroundColor, mode }) {
   const BORDER_SIZE = 20;
 
   const viewCanvas = useRef(null);
-  const drawCanvas = useRef(null);
   const viewContext = useRef(null);
-  const drawContext = useRef(null);
-  const [canvasImage, setCanvasImage] = useState(null);
 
   // drawing
   const LINE_SIZE = 4;
-  const isDrawing = useRef(false);
 
   // moving
-  const isMoving = useRef(false);
   const moveStart = useRef({ x: 0, y: 0 });
-  const [mouse, setMouse] = useState({ x: 0, y: 0 });
-  const [prevMouse, setPrevMouse] = useState({ x: 0, y: 0 });
+  const pointer = useRef({ x: 0, y: 0 });
+  const prevPointer = useRef({ x: 0, y: 0 });
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
   const cameraOffsetMax = useRef({ x: 0, y: 0 });
-
-  // erasing
-  const ERASE_SIZE = 50;
-  const isErasing = useRef(false);
 
   // zooming
   const SCROLL_SENSITIVITY = 0.001;
@@ -40,44 +33,42 @@ function Board({ size, color, backgroundColor, mode }) {
 
   // sending & receiving drawings
   const SEND_INTERVAL = 1000;
-  const sendDrawings = useRef([]);
+  const sendElements = useRef([]);
   const sendErases = useRef([]);
-  const [receivedDrawings, setReceivedDrawings] = useState([]);
-  const [receivedErases, setReceivedErases] = useState([]);
+  const [receiveElements, setReceiveElements] = useState([]);
+  const [receiveErases, setReceiveErases] = useState([]);
 
-  // caching
-  // keep this offset from SEND_INTERVAL, potential race condition (?)
-  const CACHE_INTERVAL = 1500;
-  const animationFrameStart = useRef(0);
+  const pointerDown = useRef(false);
+  const elements = useRef([]);
 
-  const draw = useCallback((context, start, end, strokeColor) => {
-    if (!context) {
-      return;
-    }
+  const getElementAtLocation = (loc) => {
+    let position = undefined;
+    const currPointer = pointer.current;
 
-    context.beginPath();
-    context.strokeStyle = strokeColor;
-    context.moveTo(start.x, start.y);
-    context.lineTo(end.x, end.y);
-    context.closePath();
-    context.stroke();
+    elements.current.every((element, index) => {
+      // if we've found a position or moved the pointer, stop searching
+      if (position !== undefined || currPointer !== pointer.current) {
+        return false;
+      }
 
-    requestAnimationFrame(() => draw(context, start, end, strokeColor));
-  }, []);
+      element.every((p) => {
+        const offset =
+          distance(p.start, p.end) -
+          (distance(p.start, loc) + distance(p.end, loc));
 
-  const erase = useCallback((context, start, end) => {
-    context.globalCompositeOperation = "destination-out";
-    context.lineWidth = ERASE_SIZE;
-    context.beginPath();
-    context.moveTo(start.x, start.y);
-    context.lineTo(end.x, end.y);
-    context.closePath();
-    context.stroke();
-    context.globalCompositeOperation = "source-over";
-    context.lineWidth = LINE_SIZE;
+        if (Math.abs(offset) < 1) {
+          position = index;
+          return false;
+        }
 
-    requestAnimationFrame(() => erase(context, start, end));
-  }, []);
+        return true;
+      });
+
+      return true;
+    });
+
+    return position;
+  };
 
   const getEventLocation = (e) => {
     if (e.touches && e.touches.length === 1) {
@@ -87,27 +78,7 @@ function Board({ size, color, backgroundColor, mode }) {
     }
   };
 
-  const clamp = (n, min, max) => {
-    return Math.max(min, Math.min(n, max));
-  };
-
-  const getClampedCamera = useCallback(
-    (canvas, x, y) => {
-      if (!canvas) {
-        return { x: 0, y: 0 };
-      }
-
-      let maxOffset = cameraOffsetMax.current;
-
-      return {
-        x: clamp(x, canvas.width - maxOffset.x * zoom, maxOffset.x * zoom),
-        y: clamp(y, canvas.height - maxOffset.y * zoom, maxOffset.y * zoom),
-      };
-    },
-    [zoom]
-  );
-
-  const mouseMove = (e) => {
+  const handlePointerMove = (e) => {
     if (!viewCanvas.current) {
       return;
     }
@@ -120,48 +91,76 @@ function Board({ size, color, backgroundColor, mode }) {
 
     let rect = viewCanvas.current.getBoundingClientRect();
 
-    if (isMoving.current) {
-      setCameraOffset(
-        getClampedCamera(
-          viewCanvas.current,
-          location.x - moveStart.current.x,
-          location.y - moveStart.current.y
-        )
-      );
-    }
-
-    setPrevMouse(mouse);
-    setMouse({
+    // update pointer locations
+    prevPointer.current = pointer.current;
+    pointer.current = {
       x: (location.x - rect.left - cameraOffset.x) / zoom,
       y: (location.y - rect.top - cameraOffset.y) / zoom,
-    });
+    };
 
-    if (isDrawing.current) {
-      draw(viewContext.current, prevMouse, mouse, color);
-      draw(drawContext.current, prevMouse, mouse, color);
-
-      sendDrawings.current.push({ start: prevMouse, end: mouse, color: color });
+    if (!pointerDown.current) {
+      return;
     }
 
-    if (isErasing.current) {
-      erase(drawContext.current, prevMouse, mouse);
-      erase(viewContext.current, prevMouse, mouse);
+    switch (mode) {
+      case Mode.Move:
+        setCameraOffset(
+          getClampedCamera(
+            viewCanvas.current,
+            location.x - moveStart.current.x,
+            location.y - moveStart.current.y
+          )
+        );
+        break;
+      case Mode.Draw:
+        const element = {
+          start: prevPointer.current,
+          end: pointer.current,
+          color: color,
+          opacity: 1,
+        };
 
-      sendErases.current.push({ start: prevMouse, end: mouse });
+        paint(viewContext.current, element);
+
+        elements.current[elements.current.length - 1].push(element);
+
+        break;
+      case Mode.Erase:
+        const nearestElement = getElementAtLocation(pointer.current);
+
+        if (nearestElement === undefined) {
+          return;
+        }
+
+        sendErases.current.push(elements.current[nearestElement]);
+
+        // make the element transparent
+        elements.current[nearestElement].forEach((point) => {
+          if (point.color.length >= 8) {
+            return;
+          }
+
+          point.color = addAlpha(point.color, 0.5);
+        });
+
+        updateCanvas();
+
+        // remove the drawing, but don't re-render yet..
+        elements.current.splice(nearestElement, 1);
+        break;
+      default:
+        break;
     }
   };
 
-  const mouseDown = (e) => {
+  const handlePointerDown = (e) => {
+    pointerDown.current = true;
+
     switch (mode) {
       case Mode.Draw:
-        isDrawing.current = true;
-        break;
-      case Mode.Erase:
-        isErasing.current = true;
+        elements.current.push([]);
         break;
       case Mode.Move:
-        isMoving.current = true;
-
         let location = getEventLocation(e);
 
         moveStart.current = {
@@ -175,16 +174,21 @@ function Board({ size, color, backgroundColor, mode }) {
     }
   };
 
-  const mouseUp = (e) => {
+  const handlePointerUp = (e) => {
+    pointerDown.current = false;
+
     switch (mode) {
       case Mode.Draw:
-        isDrawing.current = false;
+        // push the most recent drawing for sending
+
+        sendElements.current.push(
+          elements.current[elements.current.length - 1]
+        );
         break;
       case Mode.Erase:
-        isErasing.current = false;
+        updateCanvas();
         break;
       case Mode.Move:
-        isMoving.current = false;
         pinchDistanceStart.current = false;
         break;
       default:
@@ -220,15 +224,13 @@ function Board({ size, color, backgroundColor, mode }) {
     let location = getEventLocation(e);
     let rect = viewCanvas.current.getBoundingClientRect();
 
-    setPrevMouse({
+    const origin = {
       x: (location.x - rect.left - cameraOffset.x) / zoom,
       y: (location.y - rect.top - cameraOffset.y) / zoom,
-    });
+    };
 
-    setMouse({
-      x: (location.x - rect.left - cameraOffset.x) / zoom,
-      y: (location.y - rect.top - cameraOffset.y) / zoom,
-    });
+    prevPointer.current = origin;
+    pointer.current = origin;
   };
 
   const touch = (e, singleTouchHandler) => {
@@ -243,11 +245,50 @@ function Board({ size, color, backgroundColor, mode }) {
     }
   };
 
-  const clearCanvas = (canvas, context) => {
-    context.clearRect(0, 0, canvas.width, canvas.height);
-  };
+  const getClampedCamera = useCallback(
+    (canvas, x, y) => {
+      if (!canvas) {
+        return { x: 0, y: 0 };
+      }
 
-  useEffect(() => {
+      let maxOffset = cameraOffsetMax.current;
+
+      return {
+        x: clamp(x, canvas.width - maxOffset.x * zoom, maxOffset.x * zoom),
+        y: clamp(y, canvas.height - maxOffset.y * zoom, maxOffset.y * zoom),
+      };
+    },
+    [zoom]
+  );
+
+  const paint = useCallback((context, element) => {
+    if (!context) {
+      return;
+    }
+
+    const { start, end, color } = element;
+
+    context.save();
+    if (color && color.length >= 8 && color[6] !== "FF" && color[7] !== "FF") {
+      context.globalCompositeOperation = "xor";
+    }
+    context.beginPath();
+    context.lineWidth = LINE_SIZE;
+    context.strokeStyle = color;
+    context.moveTo(start.x, start.y);
+    context.lineTo(end.x, end.y);
+    context.closePath();
+    context.stroke();
+    context.restore();
+  }, []);
+
+  const renderElements = useCallback(() => {
+    elements.current.forEach((element) =>
+      element.forEach((line) => paint(viewContext.current, line))
+    );
+  }, [paint]);
+
+  const updateCanvas = useCallback(() => {
     if (!viewCanvas.current || !viewContext.current) {
       return;
     }
@@ -256,8 +297,7 @@ function Board({ size, color, backgroundColor, mode }) {
     const canvas = viewCanvas.current;
 
     context.resetTransform();
-
-    clearCanvas(canvas, context);
+    context.clearRect(0, 0, canvas.width, canvas.height);
 
     context.translate(canvas.width / 2, canvas.height / 2);
 
@@ -296,14 +336,14 @@ function Board({ size, color, backgroundColor, mode }) {
       offsetMax.y * 2
     );
 
+    renderElements();
+
     context.lineWidth = LINE_SIZE;
+  }, [cameraOffset, getClampedCamera, renderElements, zoom]);
 
-    if (!canvasImage) {
-      return;
-    }
-
-    context.drawImage(canvasImage, origin.x, origin.y);
-  }, [cameraOffset, zoom, getClampedCamera, backgroundColor, canvasImage]);
+  useEffect(() => {
+    updateCanvas();
+  }, [backgroundColor, cameraOffset, updateCanvas, zoom]);
 
   const initializeCanvas = (canvasRef, contextRef) => {
     let style = getComputedStyle(canvasRef.current);
@@ -326,32 +366,49 @@ function Board({ size, color, backgroundColor, mode }) {
   };
 
   useEffect(() => {
-    if (!receivedDrawings) {
+    if (!receiveElements.length) {
       return;
     }
 
-    receivedDrawings.forEach((drawing) =>
-      draw(drawContext.current, drawing.start, drawing.end, drawing.color)
-    );
-  }, [receivedDrawings, draw]);
+    receiveElements.forEach((element) => {
+      // add to the front since user drawings are last
+      elements.current.unshift(element);
+      element.forEach((line) => paint(viewContext.current, line));
+    });
+  }, [receiveElements, paint]);
 
   useEffect(() => {
-    if (!receivedErases) {
+    if (!receiveErases.length) {
       return;
     }
 
-    receivedErases.forEach((drawing) =>
-      erase(drawContext.current, drawing.start, drawing.end)
-    );
-  }, [receivedErases, erase]);
+    receiveErases.forEach((erasedElements) => {
+      elements.current = elements.current.filter((element) =>
+        element.every((line, index) => {
+          if (index >= erasedElements.length) {
+            // elements have different amount of lines
+            return true;
+          }
+
+          const erasedLine = erasedElements[index];
+          // account for change in alpha
+          erasedLine.color = erasedLine.color.slice(0, 7);
+
+          // perhaps there's a better approach..
+          return JSON.stringify(line) !== JSON.stringify(erasedLine);
+        })
+      );
+    });
+
+    updateCanvas();
+  }, [receiveErases, updateCanvas]);
 
   useEffect(() => {
-    if (!viewCanvas.current || !drawCanvas.current) {
+    if (!viewCanvas.current) {
       return;
     }
 
     initializeCanvas(viewCanvas, viewContext);
-    initializeCanvas(drawCanvas, drawContext);
 
     viewContext.current.imageSmoothingEnabled = false;
 
@@ -367,67 +424,27 @@ function Board({ size, color, backgroundColor, mode }) {
     };
 
     // we use state for receiving drawings since we don't want draw to become a dependency here :)
-    socket.on("draw-data", (data) => setReceivedDrawings(data));
+    socket.on("draw-data", (data) => setReceiveElements(data));
     // similarly for erasing..
-    socket.on("erase-data", (data) => setReceivedErases(data));
+    socket.on("erase-data", (data) => setReceiveErases(data));
 
     const send = setInterval(() => {
-      if (!sendDrawings) {
-        return;
+      if (sendElements) {
+        socket.emit("draw-data", sendElements.current);
+        sendElements.current = [];
       }
 
-      socket.emit("draw-data", sendDrawings.current);
-      socket.emit("erase-data", sendErases.current);
-      sendDrawings.current = [];
-      sendErases.current = [];
+      if (sendErases) {
+        socket.emit("erase-data", sendErases.current);
+        sendErases.current = [];
+      }
     }, SEND_INTERVAL);
 
-    const cache = setInterval(() => {
-      // cache the image before we cancel animations
-      const canvasImageURL = drawCanvas.current.toDataURL("image/png");
-
-      let animationFrameLast = requestAnimationFrame(() => {});
-
-      // clear all animation frames up to this point
-      while (animationFrameLast-- > animationFrameStart.current) {
-        cancelAnimationFrame(animationFrameLast);
-      }
-
-      const updatedCanvasImage = new Image();
-
-      updatedCanvasImage.addEventListener("load", () => {
-        const request = requestAnimationFrame(() => {});
-        animationFrameStart.current = request;
-
-        // make sure we cache the image in the draw port, too!
-        // clearCanvas(drawCanvas.current, drawContext.current);
-        // drawContext.current.drawImage(
-        //   updatedCanvasImage,
-        //   -canvasSize.width / 2,
-        //   -canvasSize.height / 2
-        // );
-
-        setCanvasImage(updatedCanvasImage);
-      });
-
-      updatedCanvasImage.src = canvasImageURL;
-    }, CACHE_INTERVAL);
-
-    return () => {
-      clearInterval(send);
-      clearInterval(cache);
-    };
+    return () => clearInterval(send);
   }, []);
 
   return (
     <>
-      <canvas
-        ref={drawCanvas}
-        width={size.width}
-        height={size.height}
-        className="board"
-        id="board"
-      ></canvas>
       <div
         style={{
           width: size.width,
@@ -441,16 +458,16 @@ function Board({ size, color, backgroundColor, mode }) {
         height={size.height}
         className="board"
         id="board"
-        onMouseMove={mouseMove}
-        onMouseDown={mouseDown}
-        onMouseUp={mouseUp}
+        onMouseMove={handlePointerMove}
+        onMouseDown={handlePointerDown}
+        onMouseUp={handlePointerUp}
         onWheel={(e) => wheel(-e.deltaY * SCROLL_SENSITIVITY)}
-        onTouchMove={(e) => touch(e, mouseMove)}
+        onTouchMove={(e) => touch(e, handlePointerMove)}
         onTouchStart={(e) => {
           resetMouse(e);
-          touch(e, mouseDown);
+          touch(e, handlePointerDown);
         }}
-        onTouchEnd={(e) => touch(e, mouseUp)}
+        onTouchEnd={(e) => touch(e, handlePointerUp)}
       ></canvas>
     </>
   );
