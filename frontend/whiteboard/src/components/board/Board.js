@@ -308,9 +308,7 @@ function Board({ size, color, backgroundColor, mode }) {
     (e) => {
       e.preventDefault();
 
-      if (e.touches.length !== 2 || mode !== Mode.Move) {
-        handlePointerMove(e);
-      } else {
+      if (e.touches.length === 2 && mode === Mode.Move) {
         const touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         const touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY };
 
@@ -322,13 +320,15 @@ function Board({ size, color, backgroundColor, mode }) {
         } else {
           setZoom((zoom) =>
             clamp(
-              zoom * (currentDistance / pinchDistanceStart),
+              zoom * Math.sqrt(currentDistance / pinchDistanceStart.current),
               MIN_ZOOM,
               MAX_ZOOM
             )
           );
         }
       }
+
+      handlePointerMove(e);
     },
     [mode, handlePointerMove]
   );
