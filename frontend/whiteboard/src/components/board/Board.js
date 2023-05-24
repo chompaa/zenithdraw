@@ -337,7 +337,11 @@ function Board({ size, color, backgroundColor, mode }) {
     (e) => {
       e.preventDefault();
 
-      if (e.touches.length === 2 || e.touches[0].touchType === "direct") {
+      // don't draw unless using a stylus on mobile
+      if (
+        e.touches.length === 2 ||
+        (mode === Mode.Draw && e.touches[0].touchType === "direct")
+      ) {
         return;
       }
 
@@ -354,7 +358,7 @@ function Board({ size, color, backgroundColor, mode }) {
 
       handlePointerDown(e);
     },
-    [cameraOffset, zoom, handlePointerDown]
+    [mode, cameraOffset, zoom, handlePointerDown]
   );
 
   const handleTouchEnd = useCallback(
