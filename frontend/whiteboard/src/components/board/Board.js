@@ -78,178 +78,8 @@ function Board({ size, color, backgroundColor, mode }) {
     }
   };
 
-  const handlePointerMove = (e) => {
-    if (!viewCanvas.current) {
-      return;
-    }
-
-    let location = getEventLocation(e);
-
-    if (!location) {
-      return;
-    }
-
-    let rect = viewCanvas.current.getBoundingClientRect();
-
-    // update pointer locations
-    prevPointer.current = pointer.current;
-    pointer.current = {
-      x: (location.x - rect.left - cameraOffset.x) / zoom,
-      y: (location.y - rect.top - cameraOffset.y) / zoom,
-    };
-
-    if (!pointerDown.current) {
-      return;
-    }
-
-    switch (mode) {
-      case Mode.Move:
-        setCameraOffset(
-          getClampedCamera(
-            viewCanvas.current,
-            location.x - moveStart.current.x,
-            location.y - moveStart.current.y
-          )
-        );
-        break;
-      case Mode.Draw:
-        const element = {
-          start: prevPointer.current,
-          end: pointer.current,
-          color: color,
-          opacity: 1,
-        };
-
-        paint(viewContext.current, element);
-
-        elements.current[elements.current.length - 1].push(element);
-
-        break;
-      case Mode.Erase:
-        const nearestElement = getElementAtLocation(pointer.current);
-
-        if (nearestElement === undefined) {
-          return;
-        }
-
-        sendErases.current.push(elements.current[nearestElement]);
-
-        // make the element transparent
-        elements.current[nearestElement].forEach((point) => {
-          if (point.color.length >= 8) {
-            return;
-          }
-
-          point.color = addAlpha(point.color, 0.5);
-        });
-
-        updateCanvas();
-
-        // remove the drawing, but don't re-render yet..
-        elements.current.splice(nearestElement, 1);
-        break;
-      default:
-        break;
-    }
-  };
-
-  const handlePointerDown = (e) => {
-    pointerDown.current = true;
-
-    switch (mode) {
-      case Mode.Draw:
-        elements.current.push([]);
-        break;
-      case Mode.Move:
-        let location = getEventLocation(e);
-
-        moveStart.current = {
-          x: location.x - cameraOffset.x,
-          y: location.y - cameraOffset.y,
-        };
-
-        break;
-      default:
-        break;
-    }
-  };
-
-  const handlePointerUp = (e) => {
-    pointerDown.current = false;
-
-    switch (mode) {
-      case Mode.Draw:
-        // push the most recent drawing for sending
-
-        sendElements.current.push(
-          elements.current[elements.current.length - 1]
-        );
-        break;
-      case Mode.Erase:
-        updateCanvas();
-        break;
-      case Mode.Move:
-        pinchDistanceStart.current = false;
-        break;
-      default:
-        break;
-    }
-  };
-
-  const wheel = (amount) => {
+  const handleWheel = (amount) => {
     setZoom(clamp(zoom + amount, MIN_ZOOM, MAX_ZOOM));
-  };
-
-  const pinch = (e) => {
-    const touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    const touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY };
-
-    const currentDistance =
-      Math.pow(touch1.x - touch2.x, 2) + Math.pow(touch1.y - touch2.y, 2);
-
-    if (!pinchDistanceStart.current) {
-      pinchDistanceStart.current = currentDistance;
-    } else {
-      setZoom(
-        clamp(
-          zoom * 0.5 * (currentDistance / pinchDistanceStart),
-          MIN_ZOOM,
-          MAX_ZOOM
-        )
-      );
-    }
-  };
-
-  const resetMouse = (e) => {
-    let location = getEventLocation(e);
-    let rect = viewCanvas.current.getBoundingClientRect();
-
-    const origin = {
-      x: (location.x - rect.left - cameraOffset.x) / zoom,
-      y: (location.y - rect.top - cameraOffset.y) / zoom,
-    };
-
-    prevPointer.current = origin;
-    pointer.current = origin;
-  };
-
-  const touch = (e, singleTouchHandler) => {
-    if (!e.touches) {
-      return;
-    }
-
-    if (e.touches[0].touchType === "stylus") {
-      singleTouchHandler(e);
-      return;
-    }
-
-    if (
-      e.type === "touchmove" &&
-      e.touches.length === 2 &&
-      mode === Mode.Move
-    ) {
-      pinch(e);
-    }
   };
 
   const getClampedCamera = useCallback(
@@ -348,6 +178,193 @@ function Board({ size, color, backgroundColor, mode }) {
     context.lineWidth = LINE_SIZE;
   }, [cameraOffset, getClampedCamera, renderElements, zoom]);
 
+  const handlePointerMove = useCallback(
+    (e) => {
+      if (!viewCanvas.current) {
+        return;
+      }
+
+      let location = getEventLocation(e);
+
+      if (!location) {
+        return;
+      }
+
+      let rect = viewCanvas.current.getBoundingClientRect();
+
+      // update pointer locations
+      prevPointer.current = pointer.current;
+      pointer.current = {
+        x: (location.x - rect.left - cameraOffset.x) / zoom,
+        y: (location.y - rect.top - cameraOffset.y) / zoom,
+      };
+
+      if (!pointerDown.current) {
+        return;
+      }
+
+      switch (mode) {
+        case Mode.Move:
+          setCameraOffset(
+            getClampedCamera(
+              viewCanvas.current,
+              location.x - moveStart.current.x,
+              location.y - moveStart.current.y
+            )
+          );
+          break;
+        case Mode.Draw:
+          const element = {
+            start: prevPointer.current,
+            end: pointer.current,
+            color: color,
+            opacity: 1,
+          };
+
+          paint(viewContext.current, element);
+
+          elements.current[elements.current.length - 1].push(element);
+
+          break;
+        case Mode.Erase:
+          const nearestElement = getElementAtLocation(pointer.current);
+
+          if (nearestElement === undefined) {
+            return;
+          }
+
+          sendErases.current.push(elements.current[nearestElement]);
+
+          // make the element transparent
+          elements.current[nearestElement].forEach((point) => {
+            if (point.color.length >= 8) {
+              return;
+            }
+
+            point.color = addAlpha(point.color, 0.5);
+          });
+
+          updateCanvas();
+
+          // remove the drawing, but don't re-render yet..
+          elements.current.splice(nearestElement, 1);
+          break;
+        default:
+          break;
+      }
+    },
+    [cameraOffset, color, getClampedCamera, mode, paint, updateCanvas, zoom]
+  );
+
+  const handlePointerDown = useCallback(
+    (e) => {
+      pointerDown.current = true;
+
+      switch (mode) {
+        case Mode.Draw:
+          elements.current.push([]);
+          break;
+        case Mode.Move:
+          let location = getEventLocation(e);
+
+          moveStart.current = {
+            x: location.x - cameraOffset.x,
+            y: location.y - cameraOffset.y,
+          };
+
+          break;
+        default:
+          break;
+      }
+    },
+    [cameraOffset, mode]
+  );
+
+  const handlePointerUp = useCallback(
+    (e) => {
+      pointerDown.current = false;
+
+      switch (mode) {
+        case Mode.Draw:
+          // push the most recent drawing for sending
+          sendElements.current.push(
+            elements.current[elements.current.length - 1]
+          );
+          break;
+        case Mode.Erase:
+          updateCanvas();
+          break;
+        case Mode.Move:
+          pinchDistanceStart.current = false;
+          break;
+        default:
+          break;
+      }
+    },
+    [mode, updateCanvas]
+  );
+
+  const handleTouchMove = useCallback(
+    (e) => {
+      e.preventDefault();
+
+      if (e.touches.length !== 2 || mode !== Mode.Move) {
+        handlePointerMove(e);
+      } else {
+        const touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        const touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY };
+
+        const currentDistance =
+          Math.pow(touch1.x - touch2.x, 2) + Math.pow(touch1.y - touch2.y, 2);
+
+        if (!pinchDistanceStart.current) {
+          pinchDistanceStart.current = currentDistance;
+        } else {
+          setZoom((zoom) =>
+            clamp(
+              zoom * 0.5 * (currentDistance / pinchDistanceStart),
+              MIN_ZOOM,
+              MAX_ZOOM
+            )
+          );
+        }
+      }
+    },
+    [mode, handlePointerMove]
+  );
+
+  const handleTouchStart = useCallback(
+    (e) => {
+      e.preventDefault();
+
+      if (e.touches.length === 2 || e.touches[0].touchType === "direct") {
+        return;
+      }
+
+      let location = getEventLocation(e);
+      let rect = viewCanvas.current.getBoundingClientRect();
+
+      const origin = {
+        x: (location.x - rect.left - cameraOffset.x) / zoom,
+        y: (location.y - rect.top - cameraOffset.y) / zoom,
+      };
+
+      prevPointer.current = origin;
+      pointer.current = origin;
+
+      handlePointerDown(e);
+    },
+    [cameraOffset, zoom, handlePointerDown]
+  );
+
+  const handleTouchEnd = useCallback(
+    (e) => {
+      e.preventDefault();
+      handlePointerUp(e);
+    },
+    [handlePointerUp]
+  );
+
   useEffect(() => {
     updateCanvas();
   }, [backgroundColor, cameraOffset, updateCanvas, zoom]);
@@ -411,6 +428,22 @@ function Board({ size, color, backgroundColor, mode }) {
   }, [receiveErases, updateCanvas]);
 
   useEffect(() => {
+    const canvas = viewCanvas.current;
+
+    canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
+
+    canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
+
+    canvas.addEventListener("touchend", handleTouchEnd, { passive: false });
+
+    return () => {
+      canvas.removeEventListener("touchmove", handleTouchMove);
+      canvas.removeEventListener("touchstart", handleTouchStart);
+      canvas.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [handleTouchStart, handleTouchEnd, handleTouchMove]);
+
+  useEffect(() => {
     if (!viewCanvas.current) {
       return;
     }
@@ -430,7 +463,7 @@ function Board({ size, color, backgroundColor, mode }) {
       y: canvasSize.height / 2,
     };
 
-    // we use state for receiving drawings since we don't want draw to become a dependency here :)
+    // we use state for receiving drawings since we don't want paint to become a dependency here :)
     socket.on("draw-data", (data) => setReceiveElements(data));
     // similarly for erasing..
     socket.on("erase-data", (data) => setReceiveErases(data));
@@ -447,7 +480,9 @@ function Board({ size, color, backgroundColor, mode }) {
       }
     }, SEND_INTERVAL);
 
-    return () => clearInterval(send);
+    return () => {
+      clearInterval(send);
+    };
   }, []);
 
   return (
@@ -468,13 +503,7 @@ function Board({ size, color, backgroundColor, mode }) {
         onMouseMove={handlePointerMove}
         onMouseDown={handlePointerDown}
         onMouseUp={handlePointerUp}
-        onWheel={(e) => wheel(-e.deltaY * SCROLL_SENSITIVITY)}
-        onTouchMove={(e) => touch(e, handlePointerMove)}
-        onTouchStart={(e) => {
-          resetMouse(e);
-          touch(e, handlePointerDown);
-        }}
-        onTouchEnd={(e) => touch(e, handlePointerUp)}
+        onWheel={(e) => handleWheel(-e.deltaY * SCROLL_SENSITIVITY)}
       ></canvas>
     </>
   );
