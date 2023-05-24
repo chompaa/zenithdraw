@@ -26,9 +26,9 @@ function Board({ size, color, backgroundColor, mode }) {
 
   // zooming
   const SCROLL_SENSITIVITY = 0.001;
-  const MIN_ZOOM = 1;
+  const MIN_ZOOM = 0.5;
   const MAX_ZOOM = 10;
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(2);
   const pinchDistanceStart = useRef(null);
 
   // sending & receiving drawings
@@ -463,8 +463,8 @@ function Board({ size, color, backgroundColor, mode }) {
 
     setCameraOffset({ x: canvasSize.width / 2, y: canvasSize.height / 2 });
     cameraOffsetMax.current = {
-      x: canvasSize.width / 2,
-      y: canvasSize.height / 2,
+      x: canvasSize.width,
+      y: canvasSize.height,
     };
 
     // we use state for receiving drawings since we don't want paint to become a dependency here :)
