@@ -234,9 +234,16 @@ function Board({ size, color, backgroundColor, mode }) {
   };
 
   const touch = (e, singleTouchHandler) => {
-    if (e.touches.length < 2) {
+    if (!e.touches) {
+      return;
+    }
+
+    if (e.touches[0].touchType === "stylus") {
       singleTouchHandler(e);
-    } else if (
+      return;
+    }
+
+    if (
       e.type === "touchmove" &&
       e.touches.length === 2 &&
       mode === Mode.Move
