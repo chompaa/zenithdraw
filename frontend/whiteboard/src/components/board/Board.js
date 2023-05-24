@@ -17,6 +17,10 @@ function Board({ size, color, backgroundColor, mode }) {
   // drawing
   const LINE_SIZE = 4;
 
+  // erasing
+  const ERASE_RADIUS = 5;
+  const elementsToErase = useRef(new Set());
+
   // moving
   const moveStart = useRef({ x: 0, y: 0 });
   const pointer = useRef({ x: 0, y: 0 });
@@ -56,7 +60,7 @@ function Board({ size, color, backgroundColor, mode }) {
           distance(p.start, p.end) -
           (distance(p.start, loc) + distance(p.end, loc));
 
-        if (Math.abs(offset) < 1) {
+        if (Math.abs(offset) < ERASE_RADIUS) {
           position = index;
           return false;
         }
@@ -229,7 +233,10 @@ function Board({ size, color, backgroundColor, mode }) {
         case Mode.Erase:
           const nearestElement = getElementAtLocation(pointer.current);
 
-          if (nearestElement === undefined) {
+          if (
+            nearestElement === undefined ||
+            elementsToErase.current.has(nearestElement)
+          ) {
             return;
           }
 
@@ -246,8 +253,7 @@ function Board({ size, color, backgroundColor, mode }) {
 
           updateCanvas();
 
-          // remove the drawing, but don't re-render yet..
-          elements.current.splice(nearestElement, 1);
+          elementsToErase.current.add(nearestElement);
           break;
         default:
           break;
@@ -292,6 +298,10 @@ function Board({ size, color, backgroundColor, mode }) {
           );
           break;
         case Mode.Erase:
+          elements.current = elements.current.filter(
+            (_, index) => !elementsToErase.current.has(index)
+          );
+          elementsToErase.current = new Set();
           updateCanvas();
           break;
         case Mode.Move:
