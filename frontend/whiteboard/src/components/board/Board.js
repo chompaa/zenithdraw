@@ -206,8 +206,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       let rect = viewCanvas.current.getBoundingClientRect();
 
       return {
-        x: Math.floor((location.x - rect.left - cameraOffset.x) / zoom),
-        y: Math.floor((location.y - rect.top - cameraOffset.y) / zoom),
+        x: (location.x - rect.left - cameraOffset.x) / zoom,
+        y: (location.y - rect.top - cameraOffset.y) / zoom,
       };
     },
     [cameraOffset, zoom]
