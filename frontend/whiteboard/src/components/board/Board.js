@@ -1,6 +1,13 @@
 import { socket } from "../../socket";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 
 import { addAlpha, clamp, distance } from "../../utils";
 
@@ -8,7 +15,7 @@ import Mode from "../container/Mode";
 
 import "./style.css";
 
-function Board({ size, color, backgroundColor, mode }) {
+const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   const BORDER_SIZE = 20;
 
   const viewCanvas = useRef(null);
@@ -44,6 +51,18 @@ function Board({ size, color, backgroundColor, mode }) {
 
   const pointerDown = useRef(false);
   const elements = useRef([]);
+
+  useImperativeHandle(ref, () => {
+    return {
+      getElements() {
+        return elements.current;
+      },
+      setElements(newElements) {
+        elements.current = newElements;
+        updateCanvas();
+      },
+    };
+  });
 
   const getElementAtLocation = (loc) => {
     let position = undefined;
@@ -222,7 +241,6 @@ function Board({ size, color, backgroundColor, mode }) {
             start: prevPointer.current,
             end: pointer.current,
             color: color,
-            opacity: 1,
           };
 
           paint(viewContext.current, element);
@@ -521,6 +539,6 @@ function Board({ size, color, backgroundColor, mode }) {
       ></canvas>
     </>
   );
-}
+});
 
 export default Board;
