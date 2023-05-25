@@ -159,7 +159,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
     context.resetTransform();
     context.clearRect(0, 0, canvas.width, canvas.height);
-
     context.translate(canvas.width / 2, canvas.height / 2);
 
     let origin = {
@@ -202,6 +201,18 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
     context.lineWidth = LINE_SIZE;
   }, [cameraOffset, getClampedCamera, renderElements, zoom]);
 
+  const getPointer = useCallback(
+    (location) => {
+      let rect = viewCanvas.current.getBoundingClientRect();
+
+      return {
+        x: Math.floor((location.x - rect.left - cameraOffset.x) / zoom),
+        y: Math.floor((location.y - rect.top - cameraOffset.y) / zoom),
+      };
+    },
+    [cameraOffset, zoom]
+  );
+
   const handlePointerMove = useCallback(
     (e) => {
       if (!viewCanvas.current) {
@@ -214,14 +225,11 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         return;
       }
 
-      let rect = viewCanvas.current.getBoundingClientRect();
-
       // update pointer locations
       prevPointer.current = pointer.current;
-      pointer.current = {
-        x: (location.x - rect.left - cameraOffset.x) / zoom,
-        y: (location.y - rect.top - cameraOffset.y) / zoom,
-      };
+      pointer.current = getPointer(location);
+
+      console.log(pointer.current.x, pointer.current.y);
 
       if (!pointerDown.current) {
         return;
@@ -278,7 +286,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
           break;
       }
     },
-    [cameraOffset, color, getClampedCamera, mode, paint, updateCanvas, zoom]
+    [color, getClampedCamera, mode, paint, updateCanvas, getPointer]
   );
 
   const handlePointerDown = useCallback(
@@ -374,20 +382,14 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         return;
       }
 
-      let location = getEventLocation(e);
-      let rect = viewCanvas.current.getBoundingClientRect();
+      const pointer = getPointer(getEventLocation(e));
 
-      const origin = {
-        x: (location.x - rect.left - cameraOffset.x) / zoom,
-        y: (location.y - rect.top - cameraOffset.y) / zoom,
-      };
-
-      prevPointer.current = origin;
-      pointer.current = origin;
+      prevPointer.current = pointer;
+      pointer.current = pointer;
 
       handlePointerDown(e);
     },
-    [mode, cameraOffset, zoom, handlePointerDown]
+    [mode, getPointer, handlePointerDown]
   );
 
   const handleTouchEnd = useCallback(
