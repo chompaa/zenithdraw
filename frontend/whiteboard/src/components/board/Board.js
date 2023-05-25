@@ -58,7 +58,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         return elements.current;
       },
       setElements(newElements) {
-        elements.current = newElements;
+        elements.current = [...newElements];
+        sendElements.current = [...newElements];
         updateCanvas();
       },
     };
