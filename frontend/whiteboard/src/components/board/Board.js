@@ -229,8 +229,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       prevPointer.current = pointer.current;
       pointer.current = getPointer(location);
 
-      console.log(pointer.current.x, pointer.current.y);
-
       if (!pointerDown.current) {
         return;
       }
@@ -382,10 +380,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         return;
       }
 
-      const pointer = getPointer(getEventLocation(e));
-
-      prevPointer.current = pointer;
-      pointer.current = pointer;
+      // reset the pointer each touch since we can't keep track of it
+      pointer.current = getPointer(getEventLocation(e));
 
       handlePointerDown(e);
     },
