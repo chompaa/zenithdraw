@@ -22,7 +22,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   const viewContext = useRef(null);
 
   // drawing
-  const LINE_SIZE = 4;
+  const LINE_SIZE = 2;
 
   // erasing
   const ERASE_RADIUS = 5;
@@ -37,9 +37,9 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
   // zooming
   const SCROLL_SENSITIVITY = 0.001;
-  const MIN_ZOOM = 0.5;
-  const MAX_ZOOM = 10;
-  const [zoom, setZoom] = useState(2);
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 30;
+  const [zoom, setZoom] = useState(1);
   const pinchDistanceStart = useRef(null);
 
   // sending & receiving drawings
@@ -115,8 +115,16 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       let maxOffset = cameraOffsetMax.current;
 
       return {
-        x: clamp(x, canvas.width - maxOffset.x * zoom, maxOffset.x * zoom),
-        y: clamp(y, canvas.height - maxOffset.y * zoom, maxOffset.y * zoom),
+        x: clamp(
+          x,
+          canvas.width - maxOffset.x * zoom * window.devicePixelRatio,
+          maxOffset.x * zoom * window.devicePixelRatio
+        ),
+        y: clamp(
+          y,
+          canvas.height - maxOffset.y * zoom * window.devicePixelRatio,
+          maxOffset.y * zoom * window.devicePixelRatio
+        ),
       };
     },
     [zoom]
@@ -183,7 +191,10 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
     context.translate(origin.x + offset.x, origin.y + offset.y);
 
-    context.scale(zoom, zoom);
+    context.scale(
+      window.devicePixelRatio * zoom,
+      window.devicePixelRatio * zoom
+    );
     context.lineWidth = BORDER_SIZE;
     // ctx.strokeStyle = "#393541";
     context.strokeStyle = "#191a1f";
@@ -206,8 +217,12 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       let rect = viewCanvas.current.getBoundingClientRect();
 
       return {
-        x: (location.x - rect.left - cameraOffset.x) / zoom,
-        y: (location.y - rect.top - cameraOffset.y) / zoom,
+        x:
+          (location.x - rect.left - cameraOffset.x) /
+          (zoom * window.devicePixelRatio),
+        y:
+          (location.y - rect.top - cameraOffset.y) /
+          (zoom * window.devicePixelRatio),
       };
     },
     [cameraOffset, zoom]
@@ -401,10 +416,13 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   }, [backgroundColor, cameraOffset, updateCanvas, zoom]);
 
   const initializeCanvas = (canvasRef, contextRef) => {
-    let style = getComputedStyle(canvasRef.current);
+    // let style = getComputedStyle(canvasRef.current);
 
-    canvasRef.current.width = parseInt(style.getPropertyValue("width"));
-    canvasRef.current.height = parseInt(style.getPropertyValue("height"));
+    // canvasRef.current.width *= window.devicePixelRatio;
+    // canvasRef.current.height *= window.devicePixelRatio;
+
+    // canvasRef.current.style.width = `${size.width}px`;
+    // canvasRef.current.style.height = `${size.height}px`;
 
     contextRef.current = canvasRef.current.getContext("2d", {
       willReadFrequently: true,
@@ -483,15 +501,10 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
     viewContext.current.imageSmoothingEnabled = false;
 
-    const canvasSize = {
-      width: viewCanvas.current.width,
-      height: viewCanvas.current.height,
-    };
-
-    setCameraOffset({ x: canvasSize.width / 2, y: canvasSize.height / 2 });
+    setCameraOffset({ x: size.width / 2, y: size.height / 2 });
     cameraOffsetMax.current = {
-      x: canvasSize.width,
-      y: canvasSize.height,
+      x: size.width * devicePixelRatio,
+      y: size.height * devicePixelRatio,
     };
 
     // we use state for receiving drawings since we don't want paint to become a dependency here :)
