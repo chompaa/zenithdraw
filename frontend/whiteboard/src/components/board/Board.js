@@ -275,9 +275,9 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
           console.log("draw", location.x, location.y);
           console.log("element", elements.current.length - 1);
+          console.log("points", elements.current.at(-1).points.length);
 
-          // elements.current.at(-1).points.push(point);
-          elements.current[elements.current.length - 1].push(point);
+          elements.current.at(-1).points.push(point);
           updateCanvas();
 
           break;
@@ -350,6 +350,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
           }
 
           // push the most recent drawing for sending
+          console.log("pointerUp, last length", lastElement.points.length);
           sendElements.current.push(lastElement);
           updateCanvas();
           break;
