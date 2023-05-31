@@ -251,8 +251,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         return;
       }
 
-      console.log("moveLocation", location.x, location.y);
-
       pointer.current = getPointer(location);
 
       if (!pointerDown.current) {
@@ -274,6 +272,13 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
             x: pointer.current.x,
             y: pointer.current.y,
           };
+
+          console.log("draw", location.x, location.y);
+          console.log(
+            "element",
+            elements.current.length - 1,
+            elements.at(-1).points.length
+          );
 
           elements.current.at(-1).points.push(point);
           updateCanvas();
@@ -348,7 +353,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
           }
 
           // push the most recent drawing for sending
-          sendElements.current.push(elements.current.at(-1));
+          sendElements.current.push(lastElement);
           updateCanvas();
           break;
         case Mode.Erase:
@@ -422,6 +427,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   const handleTouchEnd = useCallback(
     (e) => {
       e.preventDefault();
+      console.log("touch end");
       handlePointerUp(e);
     },
     [handlePointerUp]
