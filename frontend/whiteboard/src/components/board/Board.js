@@ -134,6 +134,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       return;
     }
 
+    console.log("paint", element.points.length);
     const { color, opacity, points } = element;
 
     context.lineWidth = LINE_SIZE;
@@ -437,6 +438,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
     receiveElements.forEach((element) => {
       // add to the front since user drawings are last
+      console.log("length", element.points.length);
       elements.current.push(element);
     });
 
