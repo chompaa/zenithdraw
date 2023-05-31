@@ -134,7 +134,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       return;
     }
 
-    console.log("paint", element.points.length);
     const { color, opacity, points } = element;
 
     context.lineWidth = LINE_SIZE;
@@ -273,17 +272,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
             y: pointer.current.y,
           };
 
-          console.log("draw", location.x, location.y);
-          console.log("element", elements.current.length - 1);
-          console.log(
-            "points",
-            elements.current[elements.current.length - 1].points.length
-          );
-          console.log(
-            "opacity",
-            elements.current[elements.current.length - 1].opacity
-          );
-          console.log("end draw");
           elements.current[elements.current.length - 1].points.push(point);
 
           updateCanvas();
@@ -291,8 +279,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
           break;
         case Mode.Erase:
           const nearestElementIndex = getElementAtLocation(pointer.current);
-
-          console.log("erase", nearestElementIndex);
 
           if (
             nearestElementIndex === undefined ||
@@ -305,7 +291,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
           sendErases.current.push(nearestElement);
 
-          console.log("nearestElement opacity", nearestElement.opacity);
           // make the element transparent
           nearestElement.opacity = 0.5;
 
@@ -330,8 +315,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
           break;
         case Mode.Move:
           let location = getEventLocation(e);
-
-          console.log("downLocation", location);
 
           moveStart.current = {
             x: location.x - cameraOffset.x,
@@ -360,7 +343,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
           }
 
           // push the most recent drawing for sending
-          console.log("pointerUp, last length", lastElement.points.length);
           sendElements.current.push(lastElement);
           updateCanvas();
           break;
@@ -422,8 +404,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         return;
       }
 
-      console.log("touch start");
-
       // reset the pointer each touch since we can't keep track of it
       pointer.current = getPointer(getEventLocation(e));
 
@@ -435,7 +415,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   const handleTouchEnd = useCallback(
     (e) => {
       e.preventDefault();
-      console.log("touch end");
       handlePointerUp(e);
     },
     [handlePointerUp]
@@ -451,8 +430,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
     }
 
     receiveElements.forEach((element) => {
-      // add to the front since user drawings are last
-      console.log("length", element.points.length);
       elements.current.push(element);
     });
 
