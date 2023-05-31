@@ -9,7 +9,7 @@ import {
   useImperativeHandle,
 } from "react";
 
-import { addAlpha, clamp, distance } from "../../utils";
+import { clamp, distance } from "../../utils";
 
 import Mode from "../container/Mode";
 
@@ -22,7 +22,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   const viewContext = useRef(null);
 
   // drawing
-  const LINE_SIZE = 2;
+  const LINE_SIZE = 5;
 
   // erasing
   const ERASE_RADIUS = 5;
@@ -31,7 +31,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   // moving
   const moveStart = useRef({ x: 0, y: 0 });
   const pointer = useRef({ x: 0, y: 0 });
-  const prevPointer = useRef({ x: 0, y: 0 });
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
   const cameraOffsetMax = useRef({ x: 0, y: 0 });
 
@@ -75,18 +74,18 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         return false;
       }
 
-      element.every((p) => {
+      const points = element.points;
+
+      for (let i = 0; i < points.length - 1; i++) {
         const offset =
-          distance(p.start, p.end) -
-          (distance(p.start, loc) + distance(p.end, loc));
+          distance(points[i], points[i + 1]) -
+          (distance(points[i], loc) + distance(points[i + 1], loc));
 
         if (Math.abs(offset) < ERASE_RADIUS) {
           position = index;
-          return false;
+          break;
         }
-
-        return true;
-      });
+      }
 
       return true;
     });
@@ -135,26 +134,37 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       return;
     }
 
-    const { start, end, color } = element;
+    const { color, opacity, points } = element;
 
-    context.save();
-    if (color && color.length >= 8 && color[6] !== "FF" && color[7] !== "FF") {
-      context.globalCompositeOperation = "xor";
-    }
-    context.beginPath();
     context.lineWidth = LINE_SIZE;
     context.strokeStyle = color;
+    context.globalAlpha = opacity;
+
+    const start = points[0];
     context.moveTo(start.x, start.y);
-    context.lineTo(end.x, end.y);
-    context.closePath();
+
+    if (points.length < 2) {
+      return;
+    }
+
+    context.beginPath();
+
+    for (let i = 0; i < points.length - 1; i++) {
+      const control = {
+        x: (points[i].x + points[i + 1].x) / 2,
+        y: (points[i].y + points[i + 1].y) / 2,
+      };
+
+      context.quadraticCurveTo(points[i].x, points[i].y, control.x, control.y);
+    }
+
     context.stroke();
-    context.restore();
+    // not sure why, but not clearing the path here gives unwanted results
+    context.beginPath();
   }, []);
 
   const renderElements = useCallback(() => {
-    elements.current.forEach((element) =>
-      element.forEach((line) => paint(viewContext.current, line))
-    );
+    elements.current.forEach((element) => paint(viewContext.current, element));
   }, [paint]);
 
   const updateCanvas = useCallback(() => {
@@ -167,7 +177,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
     context.resetTransform();
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.translate(canvas.width / 2, canvas.height / 2);
+    context.translate(canvas.width / 2 + 0.5, canvas.height / 2 + 0.5);
 
     let origin = {
       x: -canvas.width / 2,
@@ -240,8 +250,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         return;
       }
 
-      // update pointer locations
-      prevPointer.current = pointer.current;
       pointer.current = getPointer(location);
 
       if (!pointerDown.current) {
@@ -259,47 +267,42 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
           );
           break;
         case Mode.Draw:
-          const element = {
-            start: prevPointer.current,
-            end: pointer.current,
-            color: color,
+          const point = {
+            x: pointer.current.x,
+            y: pointer.current.y,
           };
 
-          paint(viewContext.current, element);
-
-          elements.current[elements.current.length - 1].push(element);
+          elements.current.at(-1).points.push(point);
+          updateCanvas();
 
           break;
         case Mode.Erase:
-          const nearestElement = getElementAtLocation(pointer.current);
+          const nearestElementIndex = getElementAtLocation(pointer.current);
 
           if (
-            nearestElement === undefined ||
-            elementsToErase.current.has(nearestElement)
+            nearestElementIndex === undefined ||
+            elementsToErase.current.has(elements.current[nearestElementIndex])
           ) {
             return;
           }
 
-          sendErases.current.push(elements.current[nearestElement]);
+          const nearestElement = elements.current[nearestElementIndex];
+
+          // push a copy since we will modify the opacity of the existing element
+          sendErases.current.push(structuredClone(nearestElement));
 
           // make the element transparent
-          elements.current[nearestElement].forEach((point) => {
-            if (point.color.length >= 8) {
-              return;
-            }
-
-            point.color = addAlpha(point.color, 0.5);
-          });
+          nearestElement.opacity = 0.5;
 
           updateCanvas();
 
-          elementsToErase.current.add(nearestElement);
+          elementsToErase.current.add(nearestElementIndex);
           break;
         default:
           break;
       }
     },
-    [color, getClampedCamera, mode, paint, updateCanvas, getPointer]
+    [getClampedCamera, mode, updateCanvas, getPointer]
   );
 
   const handlePointerDown = useCallback(
@@ -308,7 +311,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
       switch (mode) {
         case Mode.Draw:
-          elements.current.push([]);
+          elements.current.push({ color: color, opacity: 1, points: [] });
           break;
         case Mode.Move:
           let location = getEventLocation(e);
@@ -323,7 +326,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
           break;
       }
     },
-    [cameraOffset, mode]
+    [cameraOffset, mode, color]
   );
 
   const handlePointerUp = useCallback(
@@ -333,9 +336,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       switch (mode) {
         case Mode.Draw:
           // push the most recent drawing for sending
-          sendElements.current.push(
-            elements.current[elements.current.length - 1]
-          );
+          sendElements.current.push(elements.current.at(-1));
+          updateCanvas();
           break;
         case Mode.Erase:
           elements.current = elements.current.filter(
@@ -415,29 +417,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
     updateCanvas();
   }, [backgroundColor, cameraOffset, updateCanvas, zoom]);
 
-  const initializeCanvas = (canvasRef, contextRef) => {
-    // let style = getComputedStyle(canvasRef.current);
-
-    // canvasRef.current.width *= window.devicePixelRatio;
-    // canvasRef.current.height *= window.devicePixelRatio;
-
-    // canvasRef.current.style.width = `${size.width}px`;
-    // canvasRef.current.style.height = `${size.height}px`;
-
-    contextRef.current = canvasRef.current.getContext("2d", {
-      willReadFrequently: true,
-    });
-
-    contextRef.imageSmoothingEnabled = false;
-    contextRef.current.lineCap = "round";
-    contextRef.current.lineJoin = "round";
-    contextRef.current.lineWidth = LINE_SIZE;
-    contextRef.current.translate(
-      canvasRef.current.width / 2,
-      canvasRef.current.height / 2
-    );
-  };
-
   useEffect(() => {
     if (!receiveElements.length) {
       return;
@@ -446,29 +425,26 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
     receiveElements.forEach((element) => {
       // add to the front since user drawings are last
       elements.current.unshift(element);
-      element.forEach((line) => paint(viewContext.current, line));
+      updateCanvas();
     });
-  }, [receiveElements, paint]);
+  }, [receiveElements, updateCanvas]);
 
   useEffect(() => {
     if (!receiveErases.length) {
       return;
     }
 
-    receiveErases.forEach((erasedElements) => {
+    receiveErases.forEach((erasedElement) => {
       elements.current = elements.current.filter((element) =>
-        element.every((line, index) => {
-          if (index >= erasedElements.length) {
-            // elements have different amount of lines
+        element.points.every((point, index) => {
+          if (index >= erasedElement.points.length) {
+            // elements have different amount of points
             return true;
           }
 
-          const erasedLine = erasedElements[index];
-          // account for change in alpha
-          erasedLine.color = erasedLine.color.slice(0, 7);
+          const erasedPoint = erasedElement.points[index];
 
-          // perhaps there's a better approach..
-          return JSON.stringify(line) !== JSON.stringify(erasedLine);
+          return point.x !== erasedPoint.x || point.y !== erasedPoint.y;
         })
       );
     });
@@ -493,19 +469,28 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   }, [handleTouchStart, handleTouchEnd, handleTouchMove]);
 
   useEffect(() => {
-    if (!viewCanvas.current) {
-      return;
-    }
-
-    initializeCanvas(viewCanvas, viewContext);
-
-    viewContext.current.imageSmoothingEnabled = false;
-
-    setCameraOffset({ x: size.width / 2, y: size.height / 2 });
     cameraOffsetMax.current = {
       x: size.width * devicePixelRatio,
       y: size.height * devicePixelRatio,
     };
+  }, [size]);
+
+  useEffect(() => {
+    const canvas = viewCanvas.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    setCameraOffset({ x: canvas.width / 2, y: canvas.height / 2 });
+
+    const context = canvas.getContext("2d");
+
+    context.imageSmoothingEnabled = false;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.lineWidth = LINE_SIZE;
+    viewContext.current = context;
 
     // we use state for receiving drawings since we don't want paint to become a dependency here :)
     socket.on("draw-data", (data) => setReceiveElements(data));
