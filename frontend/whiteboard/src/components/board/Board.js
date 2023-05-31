@@ -250,6 +250,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         return;
       }
 
+      console.log("moveLocation", location);
+
       pointer.current = getPointer(location);
 
       if (!pointerDown.current) {
@@ -316,6 +318,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         case Mode.Move:
           let location = getEventLocation(e);
 
+          console.log("downLocation", location);
+
           moveStart.current = {
             x: location.x - cameraOffset.x,
             y: location.y - cameraOffset.y,
@@ -335,6 +339,13 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
       switch (mode) {
         case Mode.Draw:
+          const lastElement = elements.current.at(-1);
+
+          if (!lastElement.points.length) {
+            elements.current = elements.current.slice(0, -1);
+            return;
+          }
+
           // push the most recent drawing for sending
           sendElements.current.push(elements.current.at(-1));
           updateCanvas();
@@ -396,6 +407,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       ) {
         return;
       }
+
+      console.log("touch start");
 
       // reset the pointer each touch since we can't keep track of it
       pointer.current = getPointer(getEventLocation(e));
