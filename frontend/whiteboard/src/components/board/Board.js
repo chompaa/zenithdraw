@@ -279,6 +279,11 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
             elements.current.length - 1,
             elements.current.at(-1).points.length
           );
+          console.log(
+            "element",
+            elements.current.length - 1,
+            elements.current[elements.current.length - 1].points.length
+          );
 
           elements.current.at(-1).points.push(point);
           updateCanvas();
