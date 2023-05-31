@@ -114,16 +114,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       let maxOffset = cameraOffsetMax.current;
 
       return {
-        x: clamp(
-          x,
-          canvas.width - maxOffset.x * zoom * window.devicePixelRatio,
-          maxOffset.x * zoom * window.devicePixelRatio
-        ),
-        y: clamp(
-          y,
-          canvas.height - maxOffset.y * zoom * window.devicePixelRatio,
-          maxOffset.y * zoom * window.devicePixelRatio
-        ),
+        x: clamp(x, canvas.width - maxOffset.x * zoom, maxOffset.x * zoom),
+        y: clamp(y, canvas.height - maxOffset.y * zoom, maxOffset.y * zoom),
       };
     },
     [zoom]
@@ -201,10 +193,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
     context.translate(origin.x + offset.x, origin.y + offset.y);
 
-    context.scale(
-      window.devicePixelRatio * zoom,
-      window.devicePixelRatio * zoom
-    );
+    context.scale(zoom, zoom);
     context.lineWidth = BORDER_SIZE;
 
     renderElements();
@@ -217,12 +206,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       let rect = viewCanvas.current.getBoundingClientRect();
 
       return {
-        x:
-          (location.x - rect.left - cameraOffset.x) /
-          (zoom * window.devicePixelRatio),
-        y:
-          (location.y - rect.top - cameraOffset.y) /
-          (zoom * window.devicePixelRatio),
+        x: (location.x - rect.left - cameraOffset.x) / zoom,
+        y: (location.y - rect.top - cameraOffset.y) / zoom,
       };
     },
     [cameraOffset, zoom]
