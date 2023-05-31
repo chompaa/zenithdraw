@@ -206,16 +206,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       window.devicePixelRatio * zoom
     );
     context.lineWidth = BORDER_SIZE;
-    // ctx.strokeStyle = "#393541";
-    context.strokeStyle = "#191a1f";
-
-    let offsetMax = cameraOffsetMax.current;
-    context.strokeRect(
-      -offsetMax.x,
-      -offsetMax.y,
-      offsetMax.x * 2,
-      offsetMax.y * 2
-    );
 
     renderElements();
 
@@ -482,7 +472,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       x: size.width * devicePixelRatio,
       y: size.height * devicePixelRatio,
     };
-  }, [size]);
+    updateCanvas();
+  }, [size, updateCanvas]);
 
   useEffect(() => {
     const canvas = viewCanvas.current;

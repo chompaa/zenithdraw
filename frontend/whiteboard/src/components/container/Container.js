@@ -1,20 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
 
 import Board from "../board/Board";
 import Tool from "./Tool";
 import Mode from "./Mode";
 
-import moveInactive from "./icons/moveInactive.png";
-import moveActive from "./icons/moveActive.png";
-import drawActive from "./icons/drawActive.png";
-import drawInactive from "./icons/drawInactive.png";
-import eraseActive from "./icons/eraseActive.png";
-import eraseInactive from "./icons/eraseInactive.png";
-
-import downloadInactive from "./icons/downloadInactive.png";
-import downloadActive from "./icons/downloadActive.png";
-import uploadInactive from "./icons/uploadInactive.png";
-import uploadActive from "./icons/uploadActive.png";
+import { CiPen, CiEraser, CiImport, CiExport } from "react-icons/ci";
+import { BsArrowsMove } from "react-icons/bs";
 
 import "./style.css";
 
@@ -22,10 +13,38 @@ function Container() {
   const [mode, setMode] = useState(Mode.Draw);
   const [color, setColor] = useState("#000000");
 
-  const CANVAS_WIDTH = 800;
-  const CANVAS_HEIGHT = 575;
+  const CANVAS_WIDTH = 2000;
+  const CANVAS_HEIGHT = 2000;
 
   const board = useRef(null);
+
+  const Tools = {
+    move: {
+      type: "mode",
+      mode: Mode.Move,
+      icon: BsArrowsMove,
+    },
+    draw: {
+      type: "mode",
+      mode: Mode.Draw,
+      icon: CiPen,
+    },
+    erase: {
+      type: "mode",
+      mode: Mode.Erase,
+      icon: CiEraser,
+    },
+    export: {
+      type: "event",
+      icon: CiExport,
+      clickHandler: () => showElementsJSON(),
+    },
+    import: {
+      type: "event",
+      icon: CiImport,
+      clickHandler: () => showImportElementsDialog(),
+    },
+  };
 
   const changeColor = (e) => {
     setColor(e.target.value);
@@ -57,34 +76,6 @@ function Container() {
     board.current.setElements(blobToJSON);
   };
 
-  const Tools = {
-    move: {
-      type: "mode",
-      mode: Mode.Move,
-      images: { active: moveActive, inactive: moveInactive },
-    },
-    draw: {
-      type: "mode",
-      mode: Mode.Draw,
-      images: { active: drawActive, inactive: drawInactive },
-    },
-    erase: {
-      type: "mode",
-      mode: Mode.Erase,
-      images: { active: eraseActive, inactive: eraseInactive },
-    },
-    export: {
-      type: "event",
-      images: { active: downloadActive, inactive: downloadInactive },
-      clickHandler: () => showElementsJSON(),
-    },
-    import: {
-      type: "event",
-      images: { active: uploadActive, inactive: uploadInactive },
-      clickHandler: () => showImportElementsDialog(),
-    },
-  };
-
   return (
     <div className="container">
       <div className="tools-container">
@@ -93,7 +84,7 @@ function Container() {
             <Tool
               key={key}
               name={key}
-              images={value.images}
+              icon={value.icon}
               active={mode === value.mode}
               clickHandler={() => {
                 if (value.type === "mode") {
