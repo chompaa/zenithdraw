@@ -277,7 +277,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
           console.log(
             "element",
             elements.current.length - 1,
-            elements.at(-1).points.length
+            elements.current.at(-1).points.length
           );
 
           elements.current.at(-1).points.push(point);
