@@ -433,6 +433,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       elements.current.push(element);
     });
 
+    setReceiveElements([]);
+
     updateCanvas();
   }, [receiveElements, updateCanvas]);
 
