@@ -18,7 +18,6 @@ function Tool({ icon, active, clickHandler }) {
         {createElement(icon, {
           className: "tool-icon",
           fill: active ? "#5b57d1" : "black",
-          transform: "scale(1.5)",
         })}
       </div>
     </div>

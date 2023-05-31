@@ -31,15 +31,15 @@
   left: 20px;
   top: 50%;
   padding: 10px 10px 10px 10px;
+  border-radius: 10px;
+  -moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
   transform: translate(0, -50%);
   position: absolute;
   flex-direction: column;
   row-gap: 1em;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
-  -moz-border-radius: 10px;
-  -webkit-border-radius: 10px;
   background: white;
   outline: 2px solid #f2f2f2;
   z-index: 2;
@@ -73,6 +73,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transform: scale(1.5);
+  -webkit-transform: scale(1.5);
+  -moz-transform: scale(1.5);
 }
 
 .tool-container {
