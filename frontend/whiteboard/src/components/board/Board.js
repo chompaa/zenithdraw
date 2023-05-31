@@ -275,9 +275,17 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
           console.log("draw", location.x, location.y);
           console.log("element", elements.current.length - 1);
-          console.log("points", elements.current.at(-1).points.length);
+          console.log(
+            "points",
+            elements.current[elements.current.length - 1].points.length
+          );
+          console.log(
+            "opacity",
+            elements.current[elements.current.length - 1].opacity
+          );
+          console.log("end draw");
+          elements.current[elements.current.length - 1].points.push(point);
 
-          elements.current.at(-1).points.push(point);
           updateCanvas();
 
           break;
@@ -342,7 +350,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
       switch (mode) {
         case Mode.Draw:
-          const lastElement = elements.current.at(-1);
+          const lastElement = elements.current[elements.current.length - 1];
 
           if (!lastElement.points.length) {
             elements.current = elements.current.slice(0, -1);
