@@ -292,18 +292,20 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         case Mode.Erase:
           const nearestElementIndex = getElementAtLocation(pointer.current);
 
+          console.log("erase", nearestElementIndex);
+
           if (
             nearestElementIndex === undefined ||
-            elementsToErase.current.has(elements.current[nearestElementIndex])
+            elementsToErase.current.has(nearestElementIndex)
           ) {
             return;
           }
 
           const nearestElement = elements.current[nearestElementIndex];
 
-          // push a copy since we will modify the opacity of the existing element
-          sendErases.current.push(structuredClone(nearestElement));
+          sendErases.current.push(nearestElement);
 
+          console.log("nearestElement opacity", nearestElement.opacity);
           // make the element transparent
           nearestElement.opacity = 0.5;
 
