@@ -274,18 +274,10 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
           };
 
           console.log("draw", location.x, location.y);
-          console.log(
-            "element",
-            elements.current.length - 1,
-            elements.current.at(-1).points.length
-          );
-          console.log(
-            "element",
-            elements.current.length - 1,
-            elements.current[elements.current.length - 1].points.length
-          );
+          console.log("element", elements.current.length - 1);
 
-          elements.current.at(-1).points.push(point);
+          // elements.current.at(-1).points.push(point);
+          elements.current[elements.current.length - 1].push(point);
           updateCanvas();
 
           break;
