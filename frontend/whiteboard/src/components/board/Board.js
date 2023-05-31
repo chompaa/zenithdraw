@@ -250,7 +250,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         return;
       }
 
-      console.log("moveLocation", location);
+      console.log("moveLocation", location.x, location.y);
 
       pointer.current = getPointer(location);
 
@@ -437,9 +437,10 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
     receiveElements.forEach((element) => {
       // add to the front since user drawings are last
-      elements.current.unshift(element);
-      updateCanvas();
+      elements.current.push(element);
     });
+
+    updateCanvas();
   }, [receiveElements, updateCanvas]);
 
   useEffect(() => {
@@ -511,12 +512,12 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
     socket.on("erase-data", (data) => setReceiveErases(data));
 
     const send = setInterval(() => {
-      if (sendElements) {
+      if (sendElements.current.length) {
         socket.emit("draw-data", sendElements.current);
         sendElements.current = [];
       }
 
-      if (sendErases) {
+      if (sendErases.current.length) {
         socket.emit("erase-data", sendErases.current);
         sendErases.current = [];
       }
