@@ -1,4 +1,4 @@
-import { useState, useRef, useLayoutEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 
 import Board from "../board/Board";
 import Tool from "./Tool";
@@ -12,6 +12,7 @@ import "./style.css";
 function Container() {
   const [mode, setMode] = useState(Mode.Draw);
   const [color, setColor] = useState("#000000");
+  const [cursor, setCursor] = useState("default");
 
   const CANVAS_WIDTH = 2000;
   const CANVAS_HEIGHT = 2000;

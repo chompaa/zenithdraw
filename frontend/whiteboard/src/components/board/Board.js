@@ -48,6 +48,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   const [receiveElements, setReceiveElements] = useState([]);
   const [receiveErases, setReceiveErases] = useState([]);
 
+  const [pointerDisplay, setPointerDisplay] = useState("pointer");
+
   const pointerDown = useRef(false);
   const elements = useRef([]);
 
@@ -301,6 +303,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
             y: location.y - cameraOffset.y,
           };
 
+          setPointerDisplay("grabbing");
+
           break;
         default:
           break;
@@ -335,6 +339,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
           break;
         case Mode.Move:
           pinchDistanceStart.current = false;
+          setPointerDisplay("grab");
           break;
         default:
           break;
@@ -399,6 +404,25 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
     },
     [handlePointerUp]
   );
+
+  useEffect(() => {
+    const canvas = viewCanvas.current;
+
+    switch (mode) {
+      case Mode.Draw:
+        setPointerDisplay("crosshair");
+        break;
+      case Mode.Move:
+        setPointerDisplay("grab");
+        break;
+      case Mode.Erase:
+        setPointerDisplay("cell");
+        break;
+      default:
+        setPointerDisplay("default");
+        break;
+    }
+  }, [mode]);
 
   useEffect(() => {
     updateCanvas();
@@ -523,6 +547,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         onMouseDown={handlePointerDown}
         onMouseUp={handlePointerUp}
         onWheel={(e) => handleWheel(-e.deltaY * SCROLL_SENSITIVITY)}
+        style={{ cursor: pointerDisplay }}
       ></canvas>
     </>
   );
