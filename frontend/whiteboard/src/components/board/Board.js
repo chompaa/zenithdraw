@@ -169,7 +169,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
     context.resetTransform();
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.translate(canvas.width / 2 + 0.5, canvas.height / 2 + 0.5);
+    context.translate(canvas.width / 2, canvas.height / 2);
+    context.scale(zoom, zoom);
 
     let origin = {
       x: -canvas.width / 2,
@@ -192,8 +193,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
     }
 
     context.translate(origin.x + offset.x, origin.y + offset.y);
-
-    context.scale(zoom, zoom);
     context.lineWidth = BORDER_SIZE;
 
     renderElements();
@@ -203,11 +202,17 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
   const getPointer = useCallback(
     (location) => {
-      let rect = viewCanvas.current.getBoundingClientRect();
+      const canvas = viewCanvas.current;
+      const rect = canvas.getBoundingClientRect();
 
       return {
-        x: (location.x - rect.left - cameraOffset.x) / zoom,
-        y: (location.y - rect.top - cameraOffset.y) / zoom,
+        // we essentially apply the same translation operations as in `updateCanvas`
+        x:
+          (location.x - rect.left - canvas.width / 2) / zoom -
+          (-canvas.width / 2 + cameraOffset.x),
+        y:
+          (location.y - rect.top - canvas.height / 2) / zoom -
+          (-canvas.height / 2 + cameraOffset.y),
       };
     },
     [cameraOffset, zoom]
@@ -233,13 +238,13 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
       switch (mode) {
         case Mode.Move:
-          setCameraOffset(
-            getClampedCamera(
-              viewCanvas.current,
-              location.x - moveStart.current.x,
-              location.y - moveStart.current.y
-            )
+          const clampedCamera = getClampedCamera(
+            viewCanvas.current,
+            location.x - moveStart.current.x,
+            location.y - moveStart.current.y
           );
+
+          setCameraOffset(clampedCamera);
           break;
         case Mode.Draw:
           const point = {
