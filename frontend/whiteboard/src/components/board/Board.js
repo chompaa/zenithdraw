@@ -32,7 +32,9 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   const moveStart = useRef({ x: 0, y: 0 });
   const pointer = useRef({ x: 0, y: 0 });
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
+  const cameraOffsetOrigin = useRef({ x: 0, y: 0 });
   const cameraOffsetMax = useRef({ x: 0, y: 0 });
+  const [showResetCamera, setShowResetCamera] = useState(false);
 
   // zooming
   const SCROLL_SENSITIVITY = 0.001;
@@ -405,9 +407,11 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
     [handlePointerUp]
   );
 
-  useEffect(() => {
-    const canvas = viewCanvas.current;
+  const resetCameraOffset = () => {
+    setCameraOffset(cameraOffsetOrigin.current);
+  };
 
+  useEffect(() => {
     switch (mode) {
       case Mode.Draw:
         setPointerDisplay("crosshair");
@@ -426,6 +430,12 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
   useEffect(() => {
     updateCanvas();
+
+    const origin = cameraOffsetOrigin.current;
+
+    setShowResetCamera(
+      cameraOffset.x !== origin.x || cameraOffset.y !== origin.y
+    );
   }, [backgroundColor, cameraOffset, updateCanvas, zoom]);
 
   useEffect(() => {
@@ -482,21 +492,11 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   }, [handleTouchStart, handleTouchEnd, handleTouchMove]);
 
   useEffect(() => {
-    cameraOffsetMax.current = {
-      x: size.width * devicePixelRatio,
-      y: size.height * devicePixelRatio,
-    };
-    updateCanvas();
-  }, [size, updateCanvas]);
-
-  useEffect(() => {
     const canvas = viewCanvas.current;
 
     if (!canvas) {
       return;
     }
-
-    setCameraOffset({ x: canvas.width / 2, y: canvas.height / 2 });
 
     const context = canvas.getContext("2d");
 
@@ -505,6 +505,18 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
     context.lineJoin = "round";
     context.lineWidth = LINE_SIZE;
     viewContext.current = context;
+
+    cameraOffsetOrigin.current = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+    };
+
+    cameraOffsetMax.current = {
+      x: canvas.width,
+      y: canvas.height,
+    };
+
+    setCameraOffset(cameraOffsetOrigin.current);
 
     // we use state for receiving drawings since we don't want paint to become a dependency here :)
     socket.on("draw-data", (data) => setReceiveElements(data));
@@ -549,6 +561,11 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         onWheel={(e) => handleWheel(-e.deltaY * SCROLL_SENSITIVITY)}
         style={{ cursor: pointerDisplay }}
       ></canvas>
+      {showResetCamera ? (
+        <button className="center-button" onClick={() => resetCameraOffset()}>
+          Reset camera
+        </button>
+      ) : null}
     </>
   );
 });

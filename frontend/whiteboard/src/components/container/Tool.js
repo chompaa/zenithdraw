@@ -6,7 +6,7 @@ function Tool({ icon, active, clickHandler }) {
   return (
     <div
       className="tool-container"
-      style={{ background: active ? "#e3e2fe" : hover ? "#f2f2f2" : "white" }}
+      style={{ background: active ? "#e3e2fe" : hover ? "#f5f5f5" : "white" }}
       onClick={async () => {
         await Promise.resolve();
         clickHandler();
@@ -17,7 +17,7 @@ function Tool({ icon, active, clickHandler }) {
       <div className="tool">
         {createElement(icon, {
           className: "tool-icon",
-          fill: active ? "#5b57d1" : "black",
+          fill: active ? "#5b57d1" : "#3d3d3d",
         })}
       </div>
     </div>
