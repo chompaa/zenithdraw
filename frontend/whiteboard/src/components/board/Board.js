@@ -168,6 +168,8 @@ const Board = ({
     const rect = canvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio | 1;
 
+    console.log(dpr, elements.length);
+
     // set the "actual" size of the canvas
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
