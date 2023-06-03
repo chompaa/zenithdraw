@@ -164,12 +164,27 @@ const Board = ({
 
     context.resetTransform();
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.translate(canvas.width / 2, canvas.height / 2);
+
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio | 1;
+
+    // set the "actual" size of the canvas
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+
+    // scale the context to ensure correct drawing operations
+    context.scale(dpr, dpr);
+
+    // set the "drawn" size of the canvas
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${rect.height}px`;
+
+    context.translate(canvas.width / 2 / dpr, canvas.height / 2 / dpr);
     context.scale(zoom, zoom);
 
     let origin = {
-      x: -canvas.width / 2,
-      y: -canvas.height / 2,
+      x: -canvas.width / 2 / dpr,
+      y: -canvas.height / 2 / dpr,
     };
 
     const offset = getClampedCamera(canvas, cameraOffset.x, cameraOffset.y);
@@ -188,6 +203,10 @@ const Board = ({
     }
 
     context.translate(origin.x + offset.x, origin.y + offset.y);
+
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.lineWidth = LINE_SIZE;
 
     renderElements();
   }, [cameraOffset, getClampedCamera, renderElements, zoom, setCameraOffset]);
@@ -520,13 +539,7 @@ const Board = ({
       return;
     }
 
-    const context = canvas.getContext("2d");
-
-    context.imageSmoothingEnabled = false;
-    context.lineCap = "round";
-    context.lineJoin = "round";
-    context.lineWidth = LINE_SIZE;
-    viewContext.current = context;
+    viewContext.current = canvas.getContext("2d");
 
     cameraOffsetMax.current = {
       x: canvas.width,
