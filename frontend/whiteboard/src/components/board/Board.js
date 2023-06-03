@@ -226,15 +226,16 @@ const Board = ({
     (location) => {
       const canvas = viewCanvas.current;
       const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio;
 
       return {
         // we essentially apply the same translation operations as in `updateCanvas`
         x:
-          (location.x - rect.left - canvas.width / 2) / zoom -
-          (-canvas.width / 2 + cameraOffset.x),
+          (location.x - rect.left - canvas.width / 2 / dpr) / zoom -
+          (-canvas.width / 2 / dpr + cameraOffset.x),
         y:
-          (location.y - rect.top - canvas.height / 2) / zoom -
-          (-canvas.height / 2 + cameraOffset.y),
+          (location.y - rect.top - canvas.height / 2 / dpr) / zoom -
+          (-canvas.height / 2 / dpr + cameraOffset.y),
       };
     },
     [cameraOffset, zoom]
