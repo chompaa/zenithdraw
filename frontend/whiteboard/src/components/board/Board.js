@@ -165,21 +165,17 @@ const Board = ({
     context.resetTransform();
     context.clearRect(0, 0, canvas.width, canvas.height);
 
-    const rect = canvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio | 1;
+    const dpr = window.devicePixelRatio;
 
-    console.log(dpr, elements.length);
-
-    // set the "actual" size of the canvas
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
+    canvas.width = size.width * dpr;
+    canvas.height = size.height * dpr;
 
     // scale the context to ensure correct drawing operations
     context.scale(dpr, dpr);
 
     // set the "drawn" size of the canvas
-    canvas.style.width = `${rect.width}px`;
-    canvas.style.height = `${rect.height}px`;
+    canvas.style.width = `${size.width}px`;
+    canvas.style.height = `${size.height}px`;
 
     context.translate(canvas.width / 2 / dpr, canvas.height / 2 / dpr);
     context.scale(zoom, zoom);
@@ -211,7 +207,14 @@ const Board = ({
     context.lineWidth = LINE_SIZE;
 
     renderElements();
-  }, [cameraOffset, getClampedCamera, renderElements, zoom, setCameraOffset]);
+  }, [
+    cameraOffset,
+    getClampedCamera,
+    renderElements,
+    zoom,
+    setCameraOffset,
+    size,
+  ]);
 
   const getPointer = useCallback(
     (location) => {
