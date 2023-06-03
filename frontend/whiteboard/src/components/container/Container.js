@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 
 import Board from "../board/Board";
 import Menu from "./Menu";
@@ -10,18 +10,20 @@ import { Ballpen, Eraser, ArrowsMove } from "tabler-icons-react";
 import "./style.css";
 
 function Container() {
+  const CANVAS_WIDTH = 2000;
+  const CANVAS_HEIGHT = 2000;
+
   const [mode, setMode] = useState(Mode.Draw);
   const [color, setColor] = useState("#000000");
   const [elements, setElements] = useState([]);
   const [sendElements, setSendElements] = useState([]);
-  const [cameraOffset, setCameraOffset] = useState({});
 
-  const cameraOffsetStart = useRef({ x: 0, y: 0 });
-
-  const CANVAS_WIDTH = 2000;
-  const CANVAS_HEIGHT = 2000;
-
-  const board = useRef(null);
+  const CAMERA_OFFSET_START = { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 };
+  const CAMERA_OFFSET_MAX = {
+    x: CANVAS_WIDTH * window.devicePixelRatio,
+    y: CANVAS_HEIGHT * window.devicePixelRatio,
+  };
+  const [cameraOffset, setCameraOffset] = useState(CAMERA_OFFSET_START);
 
   const Tools = {
     move: {
@@ -43,22 +45,12 @@ function Container() {
   };
 
   const resetCameraOffset = () => {
-    setCameraOffset(cameraOffsetStart.current);
+    setCameraOffset(CAMERA_OFFSET_START);
   };
-
-  useEffect(() => {
-    cameraOffsetStart.current = {
-      x: CANVAS_WIDTH / 2,
-      y: CANVAS_HEIGHT / 2,
-    };
-
-    resetCameraOffset();
-  }, []);
 
   return (
     <div className="container">
       <Menu
-        board={board}
         elements={elements}
         setElements={setElements}
         sendElements={sendElements}
@@ -79,8 +71,8 @@ function Container() {
         })}
         <input className="color-picker" type="color" onChange={changeColor} />
       </div>
-      {cameraOffset.x !== cameraOffsetStart.current.x ||
-      cameraOffset.y !== cameraOffsetStart.current.y ? (
+      {cameraOffset.x !== CAMERA_OFFSET_START.x ||
+      cameraOffset.y !== CAMERA_OFFSET_START.y ? (
         <button className="center-button" onClick={() => resetCameraOffset()}>
           Reset camera
         </button>
@@ -97,6 +89,7 @@ function Container() {
           setSendElements={setSendElements}
           cameraOffset={cameraOffset}
           setCameraOffset={setCameraOffset}
+          CAMERA_OFFSET_MAX={CAMERA_OFFSET_MAX}
         ></Board>
       </div>
     </div>

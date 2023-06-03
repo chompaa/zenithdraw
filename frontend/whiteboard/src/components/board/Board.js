@@ -19,6 +19,7 @@ const Board = ({
   setSendElements,
   cameraOffset,
   setCameraOffset,
+  CAMERA_OFFSET_MAX,
 }) => {
   const viewCanvas = useRef(null);
   const viewContext = useRef(null);
@@ -33,7 +34,6 @@ const Board = ({
   // moving
   const moveStart = useRef({ x: 0, y: 0 });
   const pointer = useRef({ x: 0, y: 0 });
-  const cameraOffsetMax = useRef({ x: 0, y: 0 });
 
   // zooming
   const SCROLL_SENSITIVITY = 0.001;
@@ -102,14 +102,20 @@ const Board = ({
         return { x: 0, y: 0 };
       }
 
-      let maxOffset = cameraOffsetMax.current;
-
       return {
-        x: clamp(x, canvas.width - maxOffset.x * zoom, maxOffset.x * zoom),
-        y: clamp(y, canvas.height - maxOffset.y * zoom, maxOffset.y * zoom),
+        x: clamp(
+          x,
+          canvas.width - CAMERA_OFFSET_MAX.x * zoom,
+          CAMERA_OFFSET_MAX.x * zoom
+        ),
+        y: clamp(
+          y,
+          canvas.height - CAMERA_OFFSET_MAX.y * zoom,
+          CAMERA_OFFSET_MAX.y * zoom
+        ),
       };
     },
-    [zoom]
+    [zoom, CAMERA_OFFSET_MAX]
   );
 
   const paint = useCallback((context, element) => {
@@ -545,11 +551,6 @@ const Board = ({
     }
 
     viewContext.current = canvas.getContext("2d");
-
-    cameraOffsetMax.current = {
-      x: canvas.width,
-      y: canvas.height,
-    };
 
     // we use state for receiving drawings since we don't want paint to become a dependency here :)
     socket.on("draw-data", (data) => setReceiveElements(data));
