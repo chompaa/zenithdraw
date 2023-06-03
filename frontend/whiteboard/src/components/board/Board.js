@@ -1,13 +1,6 @@
 import { socket } from "../../socket";
 
-import {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  forwardRef,
-  useImperativeHandle,
-} from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 import { clamp, distance } from "../../utils";
 
@@ -15,9 +8,18 @@ import Mode from "../container/Mode";
 
 import "./style.css";
 
-const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
-  const BORDER_SIZE = 20;
-
+const Board = ({
+  size,
+  color,
+  backgroundColor,
+  mode,
+  elements,
+  setElements,
+  sendElements,
+  setSendElements,
+  cameraOffset,
+  setCameraOffset,
+}) => {
   const viewCanvas = useRef(null);
   const viewContext = useRef(null);
 
@@ -31,10 +33,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   // moving
   const moveStart = useRef({ x: 0, y: 0 });
   const pointer = useRef({ x: 0, y: 0 });
-  const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
-  const cameraOffsetOrigin = useRef({ x: 0, y: 0 });
   const cameraOffsetMax = useRef({ x: 0, y: 0 });
-  const [showResetCamera, setShowResetCamera] = useState(false);
 
   // zooming
   const SCROLL_SENSITIVITY = 0.001;
@@ -45,7 +44,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
   // sending & receiving drawings
   const SEND_INTERVAL = 1000;
-  const sendElements = useRef([]);
   const sendErases = useRef([]);
   const [receiveElements, setReceiveElements] = useState([]);
   const [receiveErases, setReceiveErases] = useState([]);
@@ -53,49 +51,38 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   const [pointerDisplay, setPointerDisplay] = useState("pointer");
 
   const pointerDown = useRef(false);
-  const elements = useRef([]);
 
-  useImperativeHandle(ref, () => {
-    return {
-      getElements() {
-        return elements.current;
-      },
-      setElements(newElements) {
-        elements.current = [...newElements];
-        sendElements.current = [...newElements];
-        updateCanvas();
-      },
-    };
-  });
+  const getElementAtLocation = useCallback(
+    (loc) => {
+      let position = undefined;
+      const currPointer = pointer.current;
 
-  const getElementAtLocation = (loc) => {
-    let position = undefined;
-    const currPointer = pointer.current;
-
-    elements.current.every((element, index) => {
-      // if we've found a position or moved the pointer, stop searching
-      if (position !== undefined || currPointer !== pointer.current) {
-        return false;
-      }
-
-      const points = element.points;
-
-      for (let i = 0; i < points.length - 1; i++) {
-        const offset =
-          distance(points[i], points[i + 1]) -
-          (distance(points[i], loc) + distance(points[i + 1], loc));
-
-        if (Math.abs(offset) < ERASE_RADIUS) {
-          position = index;
-          break;
+      elements.every((element, index) => {
+        // if we've found a position or moved the pointer, stop searching
+        if (position !== undefined || currPointer !== pointer.current) {
+          return false;
         }
-      }
 
-      return true;
-    });
+        const points = element.points;
 
-    return position;
-  };
+        for (let i = 0; i < points.length - 1; i++) {
+          const offset =
+            distance(points[i], points[i + 1]) -
+            (distance(points[i], loc) + distance(points[i + 1], loc));
+
+          if (Math.abs(offset) < ERASE_RADIUS) {
+            position = index;
+            break;
+          }
+        }
+
+        return true;
+      });
+
+      return position;
+    },
+    [elements]
+  );
 
   const getEventLocation = (e) => {
     if (e.touches && e.touches.length === 1) {
@@ -126,7 +113,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   );
 
   const paint = useCallback((context, element) => {
-    if (!context) {
+    if (!context || !element.points.length) {
       return;
     }
 
@@ -160,8 +147,12 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
   }, []);
 
   const renderElements = useCallback(() => {
-    elements.current.forEach((element) => paint(viewContext.current, element));
-  }, [paint]);
+    if (!elements.length) {
+      return;
+    }
+
+    elements.forEach((element) => paint(viewContext.current, element));
+  }, [paint, elements]);
 
   const updateCanvas = useCallback(() => {
     if (!viewCanvas.current || !viewContext.current) {
@@ -197,12 +188,9 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
     }
 
     context.translate(origin.x + offset.x, origin.y + offset.y);
-    context.lineWidth = BORDER_SIZE;
 
     renderElements();
-
-    context.lineWidth = LINE_SIZE;
-  }, [cameraOffset, getClampedCamera, renderElements, zoom]);
+  }, [cameraOffset, getClampedCamera, renderElements, zoom, setCameraOffset]);
 
   const getPointer = useCallback(
     (location) => {
@@ -256,7 +244,16 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
             y: pointer.current.y,
           };
 
-          elements.current[elements.current.length - 1].points.push(point);
+          const updatedElements = elements.map((element, index) => {
+            if (index === elements.length - 1) {
+              element.points.push(point);
+              return element;
+            }
+
+            return element;
+          });
+
+          setElements(updatedElements);
 
           updateCanvas();
 
@@ -271,7 +268,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
             return;
           }
 
-          const nearestElement = elements.current[nearestElementIndex];
+          const nearestElement = elements[nearestElementIndex];
 
           sendErases.current.push(nearestElement);
 
@@ -286,7 +283,16 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
           break;
       }
     },
-    [getClampedCamera, mode, updateCanvas, getPointer]
+    [
+      getClampedCamera,
+      mode,
+      updateCanvas,
+      getPointer,
+      elements,
+      setElements,
+      getElementAtLocation,
+      setCameraOffset,
+    ]
   );
 
   const handlePointerDown = useCallback(
@@ -295,7 +301,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
       switch (mode) {
         case Mode.Draw:
-          elements.current.push({ color: color, opacity: 1, points: [] });
+          setElements([...elements, { color: color, opacity: 1, points: [] }]);
           break;
         case Mode.Move:
           let location = getEventLocation(e);
@@ -312,7 +318,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
           break;
       }
     },
-    [cameraOffset, mode, color]
+    [cameraOffset, mode, color, elements, setElements]
   );
 
   const handlePointerUp = useCallback(
@@ -321,20 +327,20 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
       switch (mode) {
         case Mode.Draw:
-          const lastElement = elements.current[elements.current.length - 1];
+          const lastElement = elements[elements.length - 1];
 
           if (!lastElement.points.length) {
-            elements.current = elements.current.slice(0, -1);
+            setElements(elements.slice(0, -1));
             return;
           }
 
           // push the most recent drawing for sending
-          sendElements.current.push(lastElement);
+          setSendElements([...sendElements, lastElement]);
           updateCanvas();
           break;
         case Mode.Erase:
-          elements.current = elements.current.filter(
-            (_, index) => !elementsToErase.current.has(index)
+          setElements(
+            elements.filter((_, index) => !elementsToErase.current.has(index))
           );
           elementsToErase.current = new Set();
           updateCanvas();
@@ -347,7 +353,7 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
           break;
       }
     },
-    [mode, updateCanvas]
+    [mode, updateCanvas, elements, setElements, sendElements, setSendElements]
   );
 
   const handleTouchMove = useCallback(
@@ -407,10 +413,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
     [handlePointerUp]
   );
 
-  const resetCameraOffset = () => {
-    setCameraOffset(cameraOffsetOrigin.current);
-  };
-
   useEffect(() => {
     switch (mode) {
       case Mode.Draw:
@@ -430,12 +432,6 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
 
   useEffect(() => {
     updateCanvas();
-
-    const origin = cameraOffsetOrigin.current;
-
-    setShowResetCamera(
-      cameraOffset.x !== origin.x || cameraOffset.y !== origin.y
-    );
   }, [backgroundColor, cameraOffset, updateCanvas, zoom]);
 
   useEffect(() => {
@@ -443,44 +439,52 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       return;
     }
 
-    receiveElements.forEach((element) => {
-      elements.current.push(element);
-    });
-
+    setElements([...elements, ...receiveElements]);
     setReceiveElements([]);
 
     updateCanvas();
-  }, [receiveElements, updateCanvas]);
+  }, [receiveElements, updateCanvas, elements, setElements]);
 
   useEffect(() => {
     if (!receiveErases.length) {
       return;
     }
 
+    let erasedElementIndicies = [];
+
     receiveErases.forEach((erasedElement) => {
-      elements.current = elements.current.filter((element) =>
-        element.points.every((point, index) => {
-          if (index >= erasedElement.points.length) {
-            // elements have different amount of points
-            return true;
+      elements.forEach((element, elementIndex) => {
+        element.points.forEach((point, pointIndex) => {
+          if (pointIndex >= erasedElement.points.length) {
+            return;
           }
 
-          const erasedPoint = erasedElement.points[index];
+          const erasedPoint = erasedElement.points[pointIndex];
 
-          return point.x !== erasedPoint.x || point.y !== erasedPoint.y;
-        })
-      );
+          if (point.x === erasedPoint.x && point.y === erasedPoint.y) {
+            erasedElementIndicies.push(elementIndex);
+          }
+        });
+      });
     });
 
+    setElements(
+      elements.filter((_, index) => !erasedElementIndicies.includes(index))
+    );
+
+    setReceiveErases([]);
+
     updateCanvas();
-  }, [receiveErases, updateCanvas]);
+  }, [receiveErases, updateCanvas, elements, setElements]);
 
   useEffect(() => {
     const canvas = viewCanvas.current;
 
     canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
 
-    canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
+    canvas.addEventListener("touchstart", handleTouchStart, {
+      passive: false,
+    });
 
     canvas.addEventListener("touchend", handleTouchEnd, { passive: false });
 
@@ -490,6 +494,24 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
       canvas.removeEventListener("touchend", handleTouchEnd);
     };
   }, [handleTouchStart, handleTouchEnd, handleTouchMove]);
+
+  useEffect(() => {
+    const send = setInterval(() => {
+      if (sendElements.length) {
+        socket.emit("draw-data", sendElements);
+        setSendElements([]);
+      }
+
+      if (sendErases.current.length) {
+        socket.emit("erase-data", sendErases.current);
+        sendErases.current = [];
+      }
+    }, SEND_INTERVAL);
+
+    return () => {
+      clearInterval(send);
+    };
+  }, [sendElements, setSendElements]);
 
   useEffect(() => {
     const canvas = viewCanvas.current;
@@ -506,38 +528,15 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
     context.lineWidth = LINE_SIZE;
     viewContext.current = context;
 
-    cameraOffsetOrigin.current = {
-      x: canvas.width / 2,
-      y: canvas.height / 2,
-    };
-
     cameraOffsetMax.current = {
       x: canvas.width,
       y: canvas.height,
     };
 
-    setCameraOffset(cameraOffsetOrigin.current);
-
     // we use state for receiving drawings since we don't want paint to become a dependency here :)
     socket.on("draw-data", (data) => setReceiveElements(data));
     // similarly for erasing..
     socket.on("erase-data", (data) => setReceiveErases(data));
-
-    const send = setInterval(() => {
-      if (sendElements.current.length) {
-        socket.emit("draw-data", sendElements.current);
-        sendElements.current = [];
-      }
-
-      if (sendErases.current.length) {
-        socket.emit("erase-data", sendErases.current);
-        sendErases.current = [];
-      }
-    }, SEND_INTERVAL);
-
-    return () => {
-      clearInterval(send);
-    };
   }, []);
 
   return (
@@ -561,13 +560,8 @@ const Board = forwardRef(({ size, color, backgroundColor, mode }, ref) => {
         onWheel={(e) => handleWheel(-e.deltaY * SCROLL_SENSITIVITY)}
         style={{ cursor: pointerDisplay }}
       ></canvas>
-      {showResetCamera ? (
-        <button className="center-button" onClick={() => resetCameraOffset()}>
-          Reset camera
-        </button>
-      ) : null}
     </>
   );
-});
+};
 
 export default Board;

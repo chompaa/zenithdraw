@@ -1,18 +1,22 @@
 import { useState, useRef, useEffect } from "react";
 
 import Board from "../board/Board";
+import Menu from "./Menu";
 import Tool from "./Tool";
 import Mode from "./Mode";
 
-import { CiPen, CiEraser, CiImport, CiExport } from "react-icons/ci";
-import { BsArrowsMove } from "react-icons/bs";
+import { Ballpen, Eraser, ArrowsMove } from "tabler-icons-react";
 
 import "./style.css";
 
 function Container() {
   const [mode, setMode] = useState(Mode.Draw);
   const [color, setColor] = useState("#000000");
-  const [cursor, setCursor] = useState("default");
+  const [elements, setElements] = useState([]);
+  const [sendElements, setSendElements] = useState([]);
+  const [cameraOffset, setCameraOffset] = useState({});
+
+  const cameraOffsetStart = useRef({ x: 0, y: 0 });
 
   const CANVAS_WIDTH = 2000;
   const CANVAS_HEIGHT = 2000;
@@ -21,29 +25,16 @@ function Container() {
 
   const Tools = {
     move: {
-      type: "mode",
       mode: Mode.Move,
-      icon: BsArrowsMove,
+      icon: ArrowsMove,
     },
     draw: {
-      type: "mode",
       mode: Mode.Draw,
-      icon: CiPen,
+      icon: Ballpen,
     },
     erase: {
-      type: "mode",
       mode: Mode.Erase,
-      icon: CiEraser,
-    },
-    export: {
-      type: "event",
-      icon: CiExport,
-      clickHandler: () => showElementsJSON(),
-    },
-    import: {
-      type: "event",
-      icon: CiImport,
-      clickHandler: () => showImportElementsDialog(),
+      icon: Eraser,
     },
   };
 
@@ -51,34 +42,28 @@ function Container() {
     setColor(e.target.value);
   };
 
-  const showElementsJSON = () => {
-    const blob = new Blob([JSON.stringify(board.current.getElements())], {
-      type: "application/json",
-    });
-
-    window.open(window.URL.createObjectURL(blob));
+  const resetCameraOffset = () => {
+    setCameraOffset(cameraOffsetStart.current);
   };
 
-  const showImportElementsDialog = () => {
-    const blob = window.prompt("Enter JSON");
+  useEffect(() => {
+    cameraOffsetStart.current = {
+      x: CANVAS_WIDTH / 2,
+      y: CANVAS_HEIGHT / 2,
+    };
 
-    if (!blob) {
-      return;
-    }
-
-    let blobToJSON;
-
-    try {
-      blobToJSON = JSON.parse(blob);
-    } catch (e) {
-      return;
-    }
-
-    board.current.setElements(blobToJSON);
-  };
+    resetCameraOffset();
+  }, []);
 
   return (
     <div className="container">
+      <Menu
+        board={board}
+        elements={elements}
+        setElements={setElements}
+        sendElements={sendElements}
+        setSendElements={setSendElements}
+      ></Menu>
       <div className="tools-container">
         {Object.entries(Tools).map(([key, value]) => {
           return (
@@ -86,26 +71,32 @@ function Container() {
               key={key}
               name={key}
               icon={value.icon}
-              active={mode === value.mode}
-              clickHandler={() => {
-                if (value.type === "mode") {
-                  setMode(value.mode);
-                } else {
-                  value.clickHandler();
-                }
-              }}
+              type={value.mode}
+              mode={mode}
+              setMode={setMode}
             ></Tool>
           );
         })}
         <input className="color-picker" type="color" onChange={changeColor} />
       </div>
+      {cameraOffset.x !== cameraOffsetStart.current.x ||
+      cameraOffset.y !== cameraOffsetStart.current.y ? (
+        <button className="center-button" onClick={() => resetCameraOffset()}>
+          Reset camera
+        </button>
+      ) : null}
       <div className="board-container">
         <Board
-          ref={board}
           size={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
           color={color}
           backgroundColor={"#fcfcfc"}
           mode={mode}
+          elements={elements}
+          setElements={setElements}
+          sendElements={sendElements}
+          setSendElements={setSendElements}
+          cameraOffset={cameraOffset}
+          setCameraOffset={setCameraOffset}
         ></Board>
       </div>
     </div>

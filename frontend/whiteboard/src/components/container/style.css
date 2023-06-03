@@ -1,7 +1,7 @@
 .container {
   position: relative;
   display: flex;
-  width: 100vw;
+  width: 100;
   min-height: 100vh;
   justify-content: center;
   align-items: center;
@@ -24,21 +24,25 @@
   -moz-border-radius: 50%;
 }
 
+.menu-container {
+  z-index: 2;
+}
+
 .tools-container {
   display: flex;
-  left: 20px;
+  left: var(--margin-main);
   vertical-align: middle;
-  padding: 10px 10px 10px 10px;
-  border-radius: 10px;
-  -moz-border-radius: 10px;
-  -webkit-border-radius: 10px;
-  border: 1px solid #d6d6d6;
+  padding: 7.5px;
+  border-radius: 7.5px;
+  -moz-border-radius: 7.5px;
+  -webkit-border-radius: 7.5px;
+  border: var(--border-main);
   position: absolute;
   flex-direction: column;
   row-gap: 1em;
   align-items: center;
   justify-content: center;
-  background: white;
+  background: var(--background-color-main);
   z-index: 2;
 }
 
@@ -58,7 +62,9 @@
   transform: translate(-50%, -50%);
 }
 
-.board-container canvas, div, button {
+.board-container canvas,
+div,
+button {
   grid-row-start: 1;
   grid-column-start: 1;
 }
@@ -79,4 +85,60 @@
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
   padding: 15px;
+  cursor: pointer;
+}
+
+.menu-container {
+  position: absolute;
+  top: var(--margin-main);
+  left: var(--margin-main);
+}
+
+.menu-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  color: var(--text-color-main);
+  border-radius: 5;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border: var(--border-main);
+}
+
+.menu-items-container {
+  background: var(--background-color-main);
+  margin-top: 5px;
+  padding: 7.5px;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border: var(--border-main);
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-item-button {
+  display: inline-flex;
+  align-items: center;
+  column-gap: 10px;
+  color: var(--text-color-main);
+  font-size: 14px;
+  border-radius: 5px;
+  padding: 6px 12px 6px 12px;
+  width: 100%;
+  border: none;
+}
+
+.center-button {
+  position: absolute;
+  bottom: var(--margin-main);
+  padding: 10px 20px 10px 20px;
+  width: fit-content;
+  border-radius: 10px;
+  -moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
+  border: var(--border-main);
+  z-index: 2;
 }
