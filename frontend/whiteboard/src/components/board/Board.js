@@ -118,7 +118,20 @@ const Board = ({
     [zoom, CAMERA_OFFSET_MAX]
   );
 
-  const paint = useCallback((context, element) => {
+  const paintLine = (context, points) => {
+    if (!context) {
+      return;
+    }
+
+    context.beginPath();
+    context.lineWidth = LINE_SIZE;
+    context.strokeStyle = color;
+    context.moveTo(points.start.x, points.start.y);
+    context.lineTo(points.end.x, points.end.y);
+    context.stroke();
+  };
+
+  const paintElement = useCallback((context, element) => {
     if (!context || !element.points.length) {
       return;
     }
@@ -157,8 +170,8 @@ const Board = ({
       return;
     }
 
-    elements.forEach((element) => paint(viewContext.current, element));
-  }, [paint, elements]);
+    elements.forEach((element) => paintElement(viewContext.current, element));
+  }, [elements, paintElement]);
 
   const updateCanvas = useCallback(() => {
     if (!viewCanvas.current || !viewContext.current) {
@@ -238,6 +251,7 @@ const Board = ({
         return;
       }
 
+      const prevPointer = { ...pointer.current };
       pointer.current = getPointer(location);
 
       if (!pointerDown.current) {
@@ -261,7 +275,7 @@ const Board = ({
             y: pointer.current.y,
           };
 
-          const updatedElements = elements.map((element, index) => {
+          elements.map((element, index) => {
             if (index === elements.length - 1) {
               element.points.push(point);
               return element;
@@ -270,7 +284,10 @@ const Board = ({
             return element;
           });
 
-          setElements(updatedElements);
+          paintLine(viewContext.current, {
+            start: prevPointer,
+            end: pointer.current,
+          });
 
           break;
         case Mode.Erase:
@@ -304,9 +321,9 @@ const Board = ({
       updateCanvas,
       getPointer,
       elements,
-      setElements,
       getElementAtLocation,
       setCameraOffset,
+      paintLine,
     ]
   );
 
