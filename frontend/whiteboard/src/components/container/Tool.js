@@ -16,7 +16,7 @@ function Tool({ icon, type, mode, setMode }) {
       <div className="tool">
         {createElement(icon, {
           className: "tool-icon",
-          size: 18,
+          size: 14,
           stroke: type === mode ? "#5b57d1" : "#3d3d3d",
         })}
       </div>

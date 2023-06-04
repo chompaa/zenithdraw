@@ -118,18 +118,22 @@ const Board = ({
     [zoom, CAMERA_OFFSET_MAX]
   );
 
-  const paintLine = (context, points) => {
-    if (!context) {
-      return;
-    }
+  const paintLine = useCallback(
+    (context, points) => {
+      if (!context) {
+        return;
+      }
 
-    context.beginPath();
-    context.lineWidth = LINE_SIZE;
-    context.strokeStyle = color;
-    context.moveTo(points.start.x, points.start.y);
-    context.lineTo(points.end.x, points.end.y);
-    context.stroke();
-  };
+      context.beginPath();
+      context.lineWidth = LINE_SIZE;
+      context.strokeStyle = color;
+      context.globalAlpha = 1;
+      context.moveTo(points.start.x, points.start.y);
+      context.lineTo(points.end.x, points.end.y);
+      context.stroke();
+    },
+    [color]
+  );
 
   const paintElement = useCallback((context, element) => {
     if (!context || !element.points.length) {

@@ -11,8 +11,8 @@
 .color-picker {
   border: none;
   background: none;
-  width: 46px;
-  height: 46px;
+  width: 32px;
+  height: 32px;
   user-select: none;
   appearance: none;
 }
@@ -32,14 +32,14 @@
   display: flex;
   left: var(--margin-main);
   vertical-align: middle;
-  padding: 7.5px;
+  padding: 6px;
   border-radius: 7.5px;
   -moz-border-radius: 7.5px;
   -webkit-border-radius: 7.5px;
   border: var(--border-main);
   position: absolute;
   flex-direction: column;
-  row-gap: 1em;
+  row-gap: 12px;
   align-items: center;
   justify-content: center;
   background: var(--background-color-main);
@@ -84,7 +84,7 @@ button {
   border-radius: 5px;
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
-  padding: 15px;
+  padding: 12px;
   cursor: pointer;
 }
 
