@@ -268,6 +268,7 @@ const Board = ({
           );
 
           setCameraOffset(clampedCamera);
+
           break;
         case Mode.Draw:
           const point = {
@@ -285,8 +286,6 @@ const Board = ({
           });
 
           setElements(updatedElements);
-
-          updateCanvas();
 
           break;
         case Mode.Erase:
