@@ -78,15 +78,7 @@ function Menu({
           ></MenuItem>
           <Separator></Separator>
           <div className="background-container">
-            <MenuItem
-              name="Canvas background"
-              icon={Paint}
-              onClick={() => {
-                if (colorPicker.current) {
-                  colorPicker.current.click();
-                }
-              }}
-            ></MenuItem>
+            Canvas background
             <input
               ref={colorPicker}
               className="background-picker"

@@ -149,7 +149,37 @@ button {
   border-bottom: var(--border-main);
 }
 
+.background-container {
+  display: flex;
+  align-items: center;
+  column-gap: 10px;
+  color: var(--text-color-main);
+  font-size: 14px;
+  border-radius: 5px;
+  padding: 6px 12px 6px 12px;
+  width: 100%;
+  border: none;
+}
+
 .background-picker {
-  position: absolute;
-  opacity: 0;
+  border: none;
+  background: none;
+  width: 18px;
+  height: 18px;
+  user-select: none;
+  appearance: none;
+  padding: 0;
+  border-radius: 5px;
+  -webkit-appearance: none;
+}
+
+.background-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.background-picker::-webkit-color-swatch {
+  border: var(--border-main);
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
 }
