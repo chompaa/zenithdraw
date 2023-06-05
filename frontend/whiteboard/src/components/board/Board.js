@@ -48,6 +48,8 @@ const Board = ({
   const [receiveElements, setReceiveElements] = useState([]);
   const [receiveErases, setReceiveErases] = useState([]);
 
+  const highResolution = useRef(true);
+
   const [pointerDisplay, setPointerDisplay] = useState("pointer");
 
   const pointerDown = useRef(false);
@@ -177,58 +179,78 @@ const Board = ({
     elements.forEach((element) => paintElement(viewContext.current, element));
   }, [elements, paintElement]);
 
-  const updateCanvas = useCallback(() => {
-    if (!viewCanvas.current || !viewContext.current) {
-      return;
-    }
+  const updateCanvas = useCallback(
+    (dpr) => {
+      if (!viewCanvas.current || !viewContext.current) {
+        return;
+      }
 
-    const context = viewContext.current;
-    const canvas = viewCanvas.current;
+      if (!dpr) {
+        dpr = window.devicePixelRatio;
+      }
 
-    context.resetTransform();
-    context.clearRect(0, 0, canvas.width, canvas.height);
+      const context = viewContext.current;
+      const canvas = viewCanvas.current;
 
-    const dpr = window.devicePixelRatio;
-    // scale the context to ensure correct drawing operations
-    context.scale(dpr, dpr);
+      context.resetTransform();
+      context.clearRect(0, 0, canvas.width, canvas.height);
 
-    context.translate(canvas.width / 2 / dpr, canvas.height / 2 / dpr);
-    context.scale(zoom, zoom);
+      // scale the context to ensure correct drawing operations
+      context.scale(dpr, dpr);
 
-    let origin = {
-      x: -canvas.width / 2 / dpr,
-      y: -canvas.height / 2 / dpr,
-    };
+      context.translate(canvas.width / 2 / dpr, canvas.height / 2 / dpr);
+      context.scale(zoom, zoom);
 
-    const offset = getClampedCamera(canvas, cameraOffset.x, cameraOffset.y);
+      let origin = {
+        x: -canvas.width / 2 / dpr,
+        y: -canvas.height / 2 / dpr,
+      };
 
-    if (
-      Math.abs(cameraOffset.x - offset.x) > 0 ||
-      Math.abs(cameraOffset.y - offset.y) > 0
-    ) {
-      // if the camera went out of bounds, correct it and re-render
-      setCameraOffset({
-        x: offset.x,
-        y: offset.y,
-      });
+      const offset = getClampedCamera(canvas, cameraOffset.x, cameraOffset.y);
 
-      return;
-    }
+      if (
+        Math.abs(cameraOffset.x - offset.x) > 0 ||
+        Math.abs(cameraOffset.y - offset.y) > 0
+      ) {
+        // if the camera went out of bounds, correct it and re-render
+        setCameraOffset({
+          x: offset.x,
+          y: offset.y,
+        });
 
-    context.translate(origin.x + offset.x, origin.y + offset.y);
+        return;
+      }
 
-    context.lineCap = "round";
-    context.lineJoin = "round";
-    context.lineWidth = LINE_SIZE;
+      context.translate(origin.x + offset.x, origin.y + offset.y);
 
-    renderElements();
-  }, [cameraOffset, getClampedCamera, renderElements, zoom, setCameraOffset]);
+      context.lineCap = "round";
+      context.lineJoin = "round";
+      context.lineWidth = LINE_SIZE;
+
+      renderElements();
+    },
+    [cameraOffset, getClampedCamera, renderElements, zoom, setCameraOffset]
+  );
+
+  const setCanvasQuality = useCallback(
+    (dpr) => {
+      const canvas = viewCanvas.current;
+
+      canvas.width = size.width * dpr;
+      canvas.height = size.height * dpr;
+
+      // set the "drawn" size of the canvas
+      canvas.style.width = `${size.width}px`;
+      canvas.style.height = `${size.height}px`;
+    },
+    [size]
+  );
 
   const getPointer = useCallback(
     (location) => {
       const canvas = viewCanvas.current;
       const rect = canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio;
+      const dpr = highResolution.current ? window.devicePixelRatio : 1;
 
       return {
         // we essentially apply the same translation operations as in `updateCanvas`
@@ -348,13 +370,24 @@ const Board = ({
           };
 
           setPointerDisplay("grabbing");
+          highResolution.current = false;
+          setCanvasQuality(1);
+          updateCanvas(1);
 
           break;
         default:
           break;
       }
     },
-    [cameraOffset, mode, color, elements, setElements]
+    [
+      cameraOffset,
+      mode,
+      color,
+      elements,
+      setElements,
+      setCanvasQuality,
+      updateCanvas,
+    ]
   );
 
   const handlePointerUp = useCallback(
@@ -383,13 +416,26 @@ const Board = ({
           break;
         case Mode.Move:
           pinchDistanceStart.current = false;
+
           setPointerDisplay("grab");
+          highResolution.current = true;
+          setCanvasQuality(window.devicePixelRatio);
+          updateCanvas();
+
           break;
         default:
           break;
       }
     },
-    [mode, updateCanvas, elements, setElements, sendElements, setSendElements]
+    [
+      mode,
+      updateCanvas,
+      elements,
+      setElements,
+      sendElements,
+      setSendElements,
+      setCanvasQuality,
+    ]
   );
 
   const handleTouchMove = useCallback(
@@ -467,7 +513,9 @@ const Board = ({
   }, [mode]);
 
   useEffect(() => {
-    updateCanvas();
+    const dpr = highResolution.current ? window.devicePixelRatio : 1;
+
+    updateCanvas(dpr);
   }, [backgroundColor, cameraOffset, updateCanvas, zoom]);
 
   useEffect(() => {
