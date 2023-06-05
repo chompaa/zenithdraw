@@ -15,6 +15,7 @@ function Container() {
 
   const [mode, setMode] = useState(Mode.Draw);
   const [color, setColor] = useState("#000000");
+  const [backgroundColor, setBackgroundColor] = useState("#fcfcfc");
   const [elements, setElements] = useState([]);
   const [sendElements, setSendElements] = useState([]);
 
@@ -55,6 +56,8 @@ function Container() {
         setElements={setElements}
         sendElements={sendElements}
         setSendElements={setSendElements}
+        backgroundColor={backgroundColor}
+        setBackgroundColor={setBackgroundColor}
       ></Menu>
       <div className="tools-container">
         {Object.entries(Tools).map(([key, value]) => {
@@ -81,7 +84,7 @@ function Container() {
         <Board
           size={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
           color={color}
-          backgroundColor={"#fcfcfc"}
+          backgroundColor={backgroundColor}
           mode={mode}
           elements={elements}
           setElements={setElements}

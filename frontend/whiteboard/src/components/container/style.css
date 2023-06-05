@@ -114,13 +114,13 @@ button {
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
   border: var(--border-main);
-  position: absolute;
+  position: relative;
   display: flex;
   flex-direction: column;
 }
 
 .menu-item-button {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   column-gap: 10px;
   color: var(--text-color-main);
@@ -141,4 +141,15 @@ button {
   -webkit-border-radius: 10px;
   border: var(--border-main);
   z-index: 2;
+}
+
+.separator {
+  width: 100%;
+  margin: 7.5px 0 7.5px 0;
+  border-bottom: var(--border-main);
+}
+
+.background-picker {
+  position: absolute;
+  opacity: 0;
 }

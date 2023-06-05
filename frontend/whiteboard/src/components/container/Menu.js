@@ -1,11 +1,26 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 import MenuItem from "./MenuItem";
+import Separator from "./Separator";
 
-import { Menu2, Download, Upload } from "tabler-icons-react";
+import {
+  Menu2,
+  Download,
+  Upload,
+  Paint,
+  BrandGithub,
+} from "tabler-icons-react";
 
-function Menu({ elements, setElements, sendElements, setSendElements }) {
+function Menu({
+  elements,
+  setElements,
+  sendElements,
+  setSendElements,
+  backgroundColor,
+  setBackgroundColor,
+}) {
   const [active, setActive] = useState(false);
+  const colorPicker = useRef(null);
 
   const showImportElementsDialog = () => {
     const blob = window.prompt("Enter JSON");
@@ -34,6 +49,10 @@ function Menu({ elements, setElements, sendElements, setSendElements }) {
     window.open(window.URL.createObjectURL(blob));
   };
 
+  const openSourceURL = () => {
+    window.open("https://github.com/chompaa/whiteboard", "_blank");
+  };
+
   return (
     <div className="menu-container">
       <button className="menu-button" onClick={() => setActive(!active)}>
@@ -51,6 +70,31 @@ function Menu({ elements, setElements, sendElements, setSendElements }) {
             icon={Upload}
             onClick={() => showElementsJSON()}
           ></MenuItem>
+          <Separator></Separator>
+          <MenuItem
+            name="Source code"
+            icon={BrandGithub}
+            onClick={() => openSourceURL()}
+          ></MenuItem>
+          <Separator></Separator>
+          <div className="background-container">
+            <MenuItem
+              name="Canvas background"
+              icon={Paint}
+              onClick={() => {
+                if (colorPicker.current) {
+                  colorPicker.current.click();
+                }
+              }}
+            ></MenuItem>
+            <input
+              ref={colorPicker}
+              className="background-picker"
+              type="color"
+              value={backgroundColor}
+              onChange={(e) => setBackgroundColor(e.target.value)}
+            ></input>
+          </div>
         </div>
       ) : null}
     </div>
