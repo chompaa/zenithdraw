@@ -128,6 +128,8 @@ const Board = ({
 
       context.beginPath();
       context.lineWidth = LINE_SIZE;
+      context.lineCap = "round";
+      context.lineJoin = "round";
       context.strokeStyle = color;
       context.globalAlpha = 1;
       context.moveTo(points.start.x, points.start.y);
@@ -145,6 +147,8 @@ const Board = ({
     const { color, opacity, points } = element;
 
     context.lineWidth = LINE_SIZE;
+    context.lineCap = "round";
+    context.lineJoin = "round";
     context.strokeStyle = color;
     context.globalAlpha = opacity;
 
@@ -222,10 +226,6 @@ const Board = ({
       }
 
       context.translate(origin.x + offset.x, origin.y + offset.y);
-
-      context.lineCap = "round";
-      context.lineJoin = "round";
-      context.lineWidth = LINE_SIZE;
 
       renderElements();
     },
