@@ -11,6 +11,7 @@ import "./style.css";
 const Board = ({
   size,
   color,
+  stroke,
   backgroundColor,
   mode,
   elements,
@@ -23,9 +24,6 @@ const Board = ({
 }) => {
   const viewCanvas = useRef(null);
   const viewContext = useRef(null);
-
-  // drawing
-  const LINE_SIZE = 5;
 
   // erasing
   const ERASE_RADIUS = 5;
@@ -127,7 +125,8 @@ const Board = ({
       }
 
       context.beginPath();
-      context.lineWidth = LINE_SIZE;
+      console.log(stroke);
+      context.lineWidth = stroke;
       context.lineCap = "round";
       context.lineJoin = "round";
       context.strokeStyle = color;
@@ -136,44 +135,52 @@ const Board = ({
       context.lineTo(points.end.x, points.end.y);
       context.stroke();
     },
-    [color]
+    [color, stroke]
   );
 
-  const paintElement = useCallback((context, element) => {
-    if (!context || !element.points.length) {
-      return;
-    }
+  const paintElement = useCallback(
+    (context, element) => {
+      if (!context || !element.points.length) {
+        return;
+      }
 
-    const { color, opacity, points } = element;
+      const { stroke, color, opacity, points } = element;
 
-    context.lineWidth = LINE_SIZE;
-    context.lineCap = "round";
-    context.lineJoin = "round";
-    context.strokeStyle = color;
-    context.globalAlpha = opacity;
+      context.lineWidth = stroke;
+      context.lineCap = "round";
+      context.lineJoin = "round";
+      context.strokeStyle = color;
+      context.globalAlpha = opacity;
 
-    const start = points[0];
-    context.moveTo(start.x, start.y);
+      const start = points[0];
+      context.moveTo(start.x, start.y);
 
-    if (points.length < 2) {
-      return;
-    }
+      if (points.length < 2) {
+        return;
+      }
 
-    context.beginPath();
+      context.beginPath();
 
-    for (let i = 0; i < points.length - 1; i++) {
-      const control = {
-        x: (points[i].x + points[i + 1].x) / 2,
-        y: (points[i].y + points[i + 1].y) / 2,
-      };
+      for (let i = 0; i < points.length - 1; i++) {
+        const control = {
+          x: (points[i].x + points[i + 1].x) / 2,
+          y: (points[i].y + points[i + 1].y) / 2,
+        };
 
-      context.quadraticCurveTo(points[i].x, points[i].y, control.x, control.y);
-    }
+        context.quadraticCurveTo(
+          points[i].x,
+          points[i].y,
+          control.x,
+          control.y
+        );
+      }
 
-    context.stroke();
-    // not sure why, but not clearing the path here gives unwanted results
-    context.beginPath();
-  }, []);
+      context.stroke();
+      // not sure why, but not clearing the path here gives unwanted results
+      context.beginPath();
+    },
+    [stroke]
+  );
 
   const renderElements = useCallback(() => {
     if (!elements.length) {
@@ -359,7 +366,10 @@ const Board = ({
 
       switch (mode) {
         case Mode.Draw:
-          setElements([...elements, { color: color, opacity: 1, points: [] }]);
+          setElements([
+            ...elements,
+            { stroke: stroke, color: color, opacity: 1, points: [] },
+          ]);
           break;
         case Mode.Move:
           let location = getEventLocation(e);
@@ -382,6 +392,7 @@ const Board = ({
     [
       cameraOffset,
       mode,
+      stroke,
       color,
       elements,
       setElements,

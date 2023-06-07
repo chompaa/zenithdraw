@@ -4,12 +4,11 @@ import MenuItem from "./MenuItem";
 import Separator from "./Separator";
 
 import {
-  Menu2,
-  Download,
-  Upload,
-  Paint,
-  BrandGithub,
-} from "tabler-icons-react";
+  IconMenu2,
+  IconDownload,
+  IconUpload,
+  IconBrandGithub,
+} from "@tabler/icons-react";
 
 function Menu({
   elements,
@@ -56,24 +55,24 @@ function Menu({
   return (
     <div className="menu-container">
       <button className="menu-button" onClick={() => setActive(!active)}>
-        <Menu2 size={14}></Menu2>
+        <IconMenu2 size={14}></IconMenu2>
       </button>
       {active ? (
         <div className="menu-items-container">
           <MenuItem
             name="Import"
-            icon={Download}
+            icon={IconDownload}
             onClick={() => showImportElementsDialog()}
           ></MenuItem>
           <MenuItem
             name="Export"
-            icon={Upload}
+            icon={IconUpload}
             onClick={() => showElementsJSON()}
           ></MenuItem>
           <Separator></Separator>
           <MenuItem
             name="Source code"
-            icon={BrandGithub}
+            icon={IconBrandGithub}
             onClick={() => openSourceURL()}
           ></MenuItem>
           <Separator></Separator>

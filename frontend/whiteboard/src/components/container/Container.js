@@ -5,16 +5,19 @@ import Menu from "./Menu";
 import Tool from "./Tool";
 import Mode from "./Mode";
 
-import { Ballpen, Eraser, ArrowsMove } from "tabler-icons-react";
+import { IconBallpen, IconEraser, IconArrowsMove } from "@tabler/icons-react";
 
 import "./style.css";
+import DrawSettings from "./DrawSettings";
 
 function Container() {
   const CANVAS_WIDTH = 2000;
   const CANVAS_HEIGHT = 2000;
+  const STROKE_OPTIONS = [12, 6, 3];
 
   const [mode, setMode] = useState(Mode.Draw);
   const [color, setColor] = useState("#000000");
+  const [stroke, setStroke] = useState(STROKE_OPTIONS.length - 1);
   const [backgroundColor, setBackgroundColor] = useState("#fcfcfc");
   const [elements, setElements] = useState([]);
   const [sendElements, setSendElements] = useState([]);
@@ -29,15 +32,15 @@ function Container() {
   const Tools = {
     move: {
       mode: Mode.Move,
-      icon: ArrowsMove,
+      icon: IconArrowsMove,
     },
     draw: {
       mode: Mode.Draw,
-      icon: Ballpen,
+      icon: IconBallpen,
     },
     erase: {
       mode: Mode.Erase,
-      icon: Eraser,
+      icon: IconEraser,
     },
   };
 
@@ -72,7 +75,6 @@ function Container() {
             ></Tool>
           );
         })}
-        <input className="color-picker" type="color" onChange={changeColor} />
       </div>
       {cameraOffset.x !== CAMERA_OFFSET_START.x ||
       cameraOffset.y !== CAMERA_OFFSET_START.y ? (
@@ -83,6 +85,7 @@ function Container() {
       <div className="board-container">
         <Board
           size={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
+          stroke={STROKE_OPTIONS[stroke]}
           color={color}
           backgroundColor={backgroundColor}
           mode={mode}
@@ -95,6 +98,12 @@ function Container() {
           CAMERA_OFFSET_MAX={CAMERA_OFFSET_MAX}
         ></Board>
       </div>
+      <DrawSettings
+        STROKE_OPTIONS={STROKE_OPTIONS}
+        stroke={stroke}
+        setStroke={setStroke}
+        setColor={setColor}
+      ></DrawSettings>
     </div>
   );
 }
