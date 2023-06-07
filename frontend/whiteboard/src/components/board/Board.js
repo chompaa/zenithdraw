@@ -444,7 +444,7 @@ const Board = ({
   const getPinchTouches = (e) => {
     return {
       touch1: { x: e.touches[0].clientX, y: e.touches[0].clientY },
-      touch2: { x: 0, y: 0 },
+      touch2: { x: e.touches[1].clientX, y: e.touches[0].clientY },
     };
   };
 
