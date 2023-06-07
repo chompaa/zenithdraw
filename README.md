@@ -2,7 +2,7 @@
 
 <p align=center>
 <img align=center
-src="https://github.com/chompaa/whiteboard/assets/26204416/1a9fd5de-c325-4fb4-b5c5-4283623f7457" width=500>
+src="https://github.com/chompaa/whiteboard/assets/26204416/1a9fd5de-c325-4fb4-b5c5-4283623f7457" width=800>
 </p>
 <p align=center>
 A basic collaborative drawing app, inspired by <a href="https://github.com/excalidraw/excalidraw">Excalidraw</a>
