@@ -10,7 +10,7 @@ const io = new Server(server, {
 });
 
 const path = require("path");
-const buildPath = path.join(__dirname, "..", "frontend", "whiteboard", "build");
+const buildPath = path.join(__dirname, "..", "frontend", "build");
 
 app.use(express.static(buildPath));
 app.get("*", (req: any, res: any) => {
