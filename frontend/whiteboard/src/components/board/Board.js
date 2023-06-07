@@ -2,7 +2,7 @@ import { socket } from "../../socket";
 
 import { useState, useRef, useEffect, useCallback } from "react";
 
-import { clamp, distance } from "../../utils";
+import { clamp, distance, squareDifferenceSum } from "../../utils";
 
 import Mode from "../container/Mode";
 
@@ -38,6 +38,7 @@ const Board = ({
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 30;
   const [zoom, setZoom] = useState(1);
+  const pinchStart = useRef({ distance: undefined, zoom: undefined });
   const pinchDistanceStart = useRef(null);
 
   // sending & receiving drawings
@@ -125,7 +126,6 @@ const Board = ({
       }
 
       context.beginPath();
-      console.log(stroke);
       context.lineWidth = stroke;
       context.lineCap = "round";
       context.lineJoin = "round";
@@ -138,49 +138,41 @@ const Board = ({
     [color, stroke]
   );
 
-  const paintElement = useCallback(
-    (context, element) => {
-      if (!context || !element.points.length) {
-        return;
-      }
+  const paintElement = useCallback((context, element) => {
+    if (!context || !element.points.length) {
+      return;
+    }
 
-      const { stroke, color, opacity, points } = element;
+    const { stroke, color, opacity, points } = element;
 
-      context.lineWidth = stroke;
-      context.lineCap = "round";
-      context.lineJoin = "round";
-      context.strokeStyle = color;
-      context.globalAlpha = opacity;
+    context.lineWidth = stroke;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.strokeStyle = color;
+    context.globalAlpha = opacity;
 
-      const start = points[0];
-      context.moveTo(start.x, start.y);
+    const start = points[0];
+    context.moveTo(start.x, start.y);
 
-      if (points.length < 2) {
-        return;
-      }
+    if (points.length < 2) {
+      return;
+    }
 
-      context.beginPath();
+    context.beginPath();
 
-      for (let i = 0; i < points.length - 1; i++) {
-        const control = {
-          x: (points[i].x + points[i + 1].x) / 2,
-          y: (points[i].y + points[i + 1].y) / 2,
-        };
+    for (let i = 0; i < points.length - 1; i++) {
+      const control = {
+        x: (points[i].x + points[i + 1].x) / 2,
+        y: (points[i].y + points[i + 1].y) / 2,
+      };
 
-        context.quadraticCurveTo(
-          points[i].x,
-          points[i].y,
-          control.x,
-          control.y
-        );
-      }
+      context.quadraticCurveTo(points[i].x, points[i].y, control.x, control.y);
+    }
 
-      context.stroke();
-      // not sure why, but not clearing the path here gives unwanted results
-      context.beginPath();
-    },
-    [stroke]
-  );
+    context.stroke();
+    // not sure why, but not clearing the path here gives unwanted results
+    context.beginPath();
+  }, []);
 
   const renderElements = useCallback(() => {
     if (!elements.length) {
@@ -449,28 +441,31 @@ const Board = ({
     ]
   );
 
+  const getPinchTouches = (e) => {
+    return {
+      touch1: { x: e.touches[0].clientX, y: e.touches[0].clientY },
+      touch2: { x: 0, y: 0 },
+    };
+  };
+
   const handleTouchMove = useCallback(
     (e) => {
       e.preventDefault();
 
-      if (e.touches.length === 2 && mode === Mode.Move) {
-        const touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        const touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY };
+      if (mode === Mode.Move && e.touches.length === 2) {
+        const { touch1, touch2 } = getPinchTouches(e);
 
-        const currentDistance =
-          Math.pow(touch1.x - touch2.x, 2) + Math.pow(touch1.y - touch2.y, 2);
+        const currentDistance = squareDifferenceSum(touch1, touch2);
 
-        if (!pinchDistanceStart.current) {
-          pinchDistanceStart.current = currentDistance;
-        } else {
-          setZoom((zoom) =>
-            clamp(
-              zoom * Math.sqrt(currentDistance / pinchDistanceStart.current),
-              MIN_ZOOM,
-              MAX_ZOOM
-            )
-          );
-        }
+        const start = pinchStart.current;
+
+        setZoom(
+          clamp(
+            (start.zoom * currentDistance) / start.distance,
+            MIN_ZOOM,
+            MAX_ZOOM
+          )
+        );
       }
 
       handlePointerMove(e);
@@ -482,11 +477,19 @@ const Board = ({
     (e) => {
       e.preventDefault();
 
+      if (mode === Mode.Move && e.touches.length === 2) {
+        const { touch1, touch2 } = getPinchTouches(e);
+
+        pinchStart.current = {
+          distance: squareDifferenceSum(touch1, touch2),
+          zoom: zoom,
+        };
+
+        return;
+      }
+
       // don't draw unless using a stylus on mobile
-      if (
-        e.touches.length === 2 ||
-        (mode === Mode.Draw && e.touches[0].touchType === "direct")
-      ) {
+      if (mode === Mode.Draw && e.touches[0].touchType === "direct") {
         return;
       }
 
@@ -495,7 +498,7 @@ const Board = ({
 
       handlePointerDown(e);
     },
-    [mode, getPointer, handlePointerDown]
+    [mode, getPointer, handlePointerDown, zoom]
   );
 
   const handleTouchEnd = useCallback(

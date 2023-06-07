@@ -98,12 +98,14 @@ function Container() {
           CAMERA_OFFSET_MAX={CAMERA_OFFSET_MAX}
         ></Board>
       </div>
-      <DrawSettings
-        STROKE_OPTIONS={STROKE_OPTIONS}
-        stroke={stroke}
-        setStroke={setStroke}
-        setColor={setColor}
-      ></DrawSettings>
+      {mode === Mode.Draw ? (
+        <DrawSettings
+          STROKE_OPTIONS={STROKE_OPTIONS}
+          stroke={stroke}
+          setStroke={setStroke}
+          setColor={setColor}
+        ></DrawSettings>
+      ) : null}
     </div>
   );
 }
