@@ -47,7 +47,7 @@ const Board = ({
   const [receiveElements, setReceiveElements] = useState([]);
   const [receiveErases, setReceiveErases] = useState([]);
 
-  const highResolution = useRef(true);
+  const useDpr = useRef(true);
 
   const [pointerDisplay, setPointerDisplay] = useState("pointer");
 
@@ -241,6 +241,8 @@ const Board = ({
       // set the "drawn" size of the canvas
       canvas.style.width = `${size.width}px`;
       canvas.style.height = `${size.height}px`;
+
+      useDpr.current = dpr === 1 ? false : true;
     },
     [size]
   );
@@ -249,7 +251,7 @@ const Board = ({
     (location) => {
       const canvas = viewCanvas.current;
       const rect = canvas.getBoundingClientRect();
-      const dpr = highResolution.current ? window.devicePixelRatio : 1;
+      const dpr = useDpr.current ? window.devicePixelRatio : 1;
 
       return {
         // we essentially apply the same translation operations as in `updateCanvas`
@@ -287,8 +289,8 @@ const Board = ({
         case Mode.Move:
           const clampedCamera = getClampedCamera(
             viewCanvas.current,
-            location.x - moveStart.current.x,
-            location.y - moveStart.current.y
+            location.x / zoom - moveStart.current.x,
+            location.y / zoom - moveStart.current.y
           );
 
           setCameraOffset(clampedCamera);
@@ -349,6 +351,7 @@ const Board = ({
       getElementAtLocation,
       setCameraOffset,
       paintLine,
+      zoom,
     ]
   );
 
@@ -367,12 +370,11 @@ const Board = ({
           let location = getEventLocation(e);
 
           moveStart.current = {
-            x: location.x - cameraOffset.x,
-            y: location.y - cameraOffset.y,
+            x: location.x / zoom - cameraOffset.x,
+            y: location.y / zoom - cameraOffset.y,
           };
 
           setPointerDisplay("grabbing");
-          highResolution.current = false;
           setCanvasQuality(1);
           updateCanvas(1);
 
@@ -390,6 +392,7 @@ const Board = ({
       setElements,
       setCanvasQuality,
       updateCanvas,
+      zoom,
     ]
   );
 
@@ -421,7 +424,6 @@ const Board = ({
           pinchDistanceStart.current = false;
 
           setPointerDisplay("grab");
-          highResolution.current = true;
           setCanvasQuality(window.devicePixelRatio);
           updateCanvas();
 
@@ -527,7 +529,7 @@ const Board = ({
   }, [mode]);
 
   useEffect(() => {
-    const dpr = highResolution.current ? window.devicePixelRatio : 1;
+    const dpr = useDpr.current ? window.devicePixelRatio : 1;
 
     updateCanvas(dpr);
   }, [backgroundColor, cameraOffset, updateCanvas, zoom]);
