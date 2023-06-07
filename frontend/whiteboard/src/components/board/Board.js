@@ -182,54 +182,53 @@ const Board = ({
     elements.forEach((element) => paintElement(viewContext.current, element));
   }, [elements, paintElement]);
 
-  const updateCanvas = useCallback(
-    (dpr) => {
-      if (!viewCanvas.current || !viewContext.current) {
-        return;
-      }
+  const updateCanvas = useCallback(() => {
+    if (!viewCanvas.current || !viewContext.current) {
+      return;
+    }
 
-      if (!dpr) {
-        dpr = window.devicePixelRatio;
-      }
+    let dpr = 1;
 
-      const context = viewContext.current;
-      const canvas = viewCanvas.current;
+    if (useDpr.current) {
+      dpr = window.devicePixelRatio;
+    }
 
-      context.resetTransform();
-      context.clearRect(0, 0, canvas.width, canvas.height);
+    const context = viewContext.current;
+    const canvas = viewCanvas.current;
 
-      // scale the context to ensure correct drawing operations
-      context.scale(dpr, dpr);
+    context.resetTransform();
+    context.clearRect(0, 0, canvas.width, canvas.height);
 
-      context.translate(canvas.width / 2 / dpr, canvas.height / 2 / dpr);
-      context.scale(zoom, zoom);
+    // scale the context to ensure correct drawing operations
+    context.scale(dpr, dpr);
 
-      let origin = {
-        x: -canvas.width / 2 / dpr,
-        y: -canvas.height / 2 / dpr,
-      };
+    context.translate(canvas.width / 2 / dpr, canvas.height / 2 / dpr);
+    context.scale(zoom, zoom);
 
-      const offset = getClampedCamera(canvas, cameraOffset.x, cameraOffset.y);
+    const origin = {
+      x: -canvas.width / 2 / dpr,
+      y: -canvas.height / 2 / dpr,
+    };
 
-      if (
-        Math.abs(cameraOffset.x - offset.x) > 0 ||
-        Math.abs(cameraOffset.y - offset.y) > 0
-      ) {
-        // if the camera went out of bounds, correct it and re-render
-        setCameraOffset({
-          x: offset.x,
-          y: offset.y,
-        });
+    const offset = getClampedCamera(canvas, cameraOffset.x, cameraOffset.y);
 
-        return;
-      }
+    if (
+      Math.abs(cameraOffset.x - offset.x) > 0 ||
+      Math.abs(cameraOffset.y - offset.y) > 0
+    ) {
+      // if the camera went out of bounds, correct it and re-render
+      setCameraOffset({
+        x: offset.x,
+        y: offset.y,
+      });
 
-      context.translate(origin.x + offset.x, origin.y + offset.y);
+      return;
+    }
 
-      renderElements();
-    },
-    [cameraOffset, getClampedCamera, renderElements, zoom, setCameraOffset]
-  );
+    context.translate(origin.x + offset.x, origin.y + offset.y);
+
+    renderElements();
+  }, [cameraOffset, getClampedCamera, renderElements, zoom, setCameraOffset]);
 
   const setCanvasQuality = useCallback(
     (dpr) => {
@@ -243,8 +242,10 @@ const Board = ({
       canvas.style.height = `${size.height}px`;
 
       useDpr.current = dpr === 1 ? false : true;
+
+      updateCanvas();
     },
-    [size]
+    [size, updateCanvas]
   );
 
   const getPointer = useCallback(
@@ -376,7 +377,6 @@ const Board = ({
 
           setPointerDisplay("grabbing");
           setCanvasQuality(1);
-          updateCanvas(1);
 
           break;
         default:
@@ -391,7 +391,6 @@ const Board = ({
       elements,
       setElements,
       setCanvasQuality,
-      updateCanvas,
       zoom,
     ]
   );
@@ -411,21 +410,25 @@ const Board = ({
 
           // push the most recent drawing for sending
           setSendElements([...sendElements, lastElement]);
+
           updateCanvas();
+
           break;
         case Mode.Erase:
           setElements(
             elements.filter((_, index) => !elementsToErase.current.has(index))
           );
+
           elementsToErase.current = new Set();
+
           updateCanvas();
+
           break;
         case Mode.Move:
           pinchDistanceStart.current = false;
 
           setPointerDisplay("grab");
           setCanvasQuality(window.devicePixelRatio);
-          updateCanvas();
 
           break;
         default:
@@ -487,6 +490,8 @@ const Board = ({
           zoom: zoom,
         };
 
+        setCanvasQuality(1);
+
         return;
       }
 
@@ -500,15 +505,16 @@ const Board = ({
 
       handlePointerDown(e);
     },
-    [mode, getPointer, handlePointerDown, zoom]
+    [mode, getPointer, handlePointerDown, zoom, setCanvasQuality]
   );
 
   const handleTouchEnd = useCallback(
     (e) => {
       e.preventDefault();
+      setCanvasQuality(window.devicePixelRatio);
       handlePointerUp(e);
     },
-    [handlePointerUp]
+    [handlePointerUp, setCanvasQuality]
   );
 
   useEffect(() => {
@@ -529,9 +535,7 @@ const Board = ({
   }, [mode]);
 
   useEffect(() => {
-    const dpr = useDpr.current ? window.devicePixelRatio : 1;
-
-    updateCanvas(dpr);
+    updateCanvas();
   }, [backgroundColor, cameraOffset, updateCanvas, zoom]);
 
   useEffect(() => {

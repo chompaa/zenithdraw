@@ -12,7 +12,7 @@ import DrawSettings from "./DrawSettings";
 
 function Container() {
   const CANVAS_WIDTH = 2000;
-  const CANVAS_HEIGHT = 2000;
+  const CANVAS_HEIGHT = 1000;
   const STROKE_OPTIONS = [12, 6, 3];
 
   const [mode, setMode] = useState(Mode.Draw);
