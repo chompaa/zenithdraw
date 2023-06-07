@@ -7,5 +7,5 @@ export const distance = (a, b) => {
 };
 
 export const squareDifferenceSum = (a, b) => {
-  return Math.pow(b.x - a.x, 2) + Math.pow(b.y, a.y, 2);
+  return Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2);
 };
