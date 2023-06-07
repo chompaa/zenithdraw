@@ -1,0 +1,11 @@
+.center-button {
+  position: absolute;
+  bottom: var(--margin-main);
+  padding: 10px 20px 10px 20px;
+  width: fit-content;
+  border-radius: 10px;
+  -moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
+  border: var(--border-main);
+  z-index: 2;
+}

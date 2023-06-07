@@ -1,6 +1,8 @@
 import { useState } from "react";
 
-function DrawSettings({ STROKE_OPTIONS, stroke, setStroke, setColor }) {
+import "./style.css";
+
+function DrawSettings({ STROKE_OPTIONS, stroke, setStroke, color, setColor }) {
   const [hover, setHover] = useState(null);
 
   return (
@@ -37,6 +39,7 @@ function DrawSettings({ STROKE_OPTIONS, stroke, setStroke, setColor }) {
       <input
         className="color-picker"
         type="color"
+        value={color}
         onChange={(e) => setColor(e.target.value)}
       />
     </div>

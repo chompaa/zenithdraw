@@ -1,0 +1,96 @@
+.tools-container {
+  display: flex;
+  left: var(--margin-main);
+  vertical-align: middle;
+  padding: 6px;
+  border-radius: 7.5px;
+  -moz-border-radius: 7.5px;
+  -webkit-border-radius: 7.5px;
+  border: var(--border-main);
+  position: absolute;
+  flex-direction: column;
+  row-gap: 12px;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-color-main);
+  z-index: 2;
+}
+
+.tool-container {
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.tool {
+  flex-direction: row;
+  column-gap: 1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(1.5);
+  -webkit-transform: scale(1.5);
+  -moz-transform: scale(1.5);
+}
+
+.draw-settings-container {
+  position: absolute;
+  top: var(--margin-main);
+  z-index: 2;
+  padding: 8px 12px 8px 12px;
+  font-size: 14px;
+  color: var(--text-color-main);
+  border-radius: 5;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border: var(--border-main);
+  display: flex;
+  align-items: center;
+  column-gap: 10px;
+  background: var(--background-color-main);
+  font-size: 14px;
+}
+
+.stroke-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 20px;
+  padding: 0px 5px 0px 5px;
+  border-radius: 5px;
+  background: white;
+  cursor: pointer;
+}
+
+.stroke {
+  width: 100%;
+  margin: 7.5px 0 7.5px 0;
+  border-bottom: 1px solid var(--text-color-main);
+  border-radius: 5px;
+}
+
+.color-picker {
+  border: none;
+  background: none;
+  width: 18px;
+  height: 18px;
+  user-select: none;
+  appearance: none;
+  padding: 0;
+  border-radius: 5px;
+  -webkit-appearance: none;
+}
+
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-picker::-webkit-color-swatch {
+  border: var(--border-main);
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+}

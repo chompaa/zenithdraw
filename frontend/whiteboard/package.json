@@ -1,6 +1,6 @@
 {
-  "name": "whiteboard",
-  "version": "0.1.0",
+  "name": "zenithdraw",
+  "version": "1.0.0",
   "private": true,
   "dependencies": {
     "@tabler/icons-react": "^2.22.0",

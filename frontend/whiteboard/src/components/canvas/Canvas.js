@@ -4,11 +4,11 @@ import { useState, useRef, useEffect, useCallback } from "react";
 
 import { clamp, distance, squareDifferenceSum } from "../../utils";
 
-import Mode from "../container/Mode";
+import Mode from "../tool/Mode";
 
 import "./style.css";
 
-const Board = ({
+const Canvas = ({
   size,
   color,
   stroke,
@@ -667,4 +667,4 @@ const Board = ({
   );
 };
 
-export default Board;
+export default Canvas;

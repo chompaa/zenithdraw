@@ -10,6 +10,8 @@ import {
   IconBrandGithub,
 } from "@tabler/icons-react";
 
+import "./style.css";
+
 function Menu({
   elements,
   setElements,
